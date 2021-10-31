@@ -18,10 +18,15 @@ export const defaultTachyonClientOptions: Partial<TachyonClientOptions> = {
 export type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
 export type ServerCommandType<T> = T extends keyof typeof serverCommandSchema ? Static<typeof serverCommandSchema[T]> : void;
 
+// TODO: reduce the complexity and repeated information with this and the .addClientCommand calls using constraint identify functions
 export interface TachyonClient {
     [key: string]: unknown;
     ping(): Promise<ServerCommandType<"s.system.pong">>;
+    register(options: ClientCommandType<"c.auth.register">): Promise<ServerCommandType<"s.auth.register">>;
     getToken(options: ClientCommandType<"c.auth.get_token">): Promise<ServerCommandType<"s.auth.get_token">>;
+    login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
+    verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
+    disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
 }
 
 export class TachyonClient {
@@ -34,7 +39,10 @@ export class TachyonClient {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
 
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
+        this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addClientCommand("disconnect", "c.auth.disconnect");
 
         this.socket = tls.connect(this.config);
 

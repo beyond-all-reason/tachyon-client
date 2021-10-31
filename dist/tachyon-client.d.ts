@@ -15,7 +15,11 @@ export declare type ServerCommandType<T> = T extends keyof typeof serverCommandS
 export interface TachyonClient {
     [key: string]: unknown;
     ping(): Promise<ServerCommandType<"s.system.pong">>;
+    register(options: ClientCommandType<"c.auth.register">): Promise<ServerCommandType<"s.auth.register">>;
     getToken(options: ClientCommandType<"c.auth.get_token">): Promise<ServerCommandType<"s.auth.get_token">>;
+    login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
+    verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
+    disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
 }
 export declare class TachyonClient {
     protected config: TachyonClientOptions;

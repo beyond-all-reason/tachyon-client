@@ -30,7 +30,10 @@ class TachyonClient {
         this.onCommand = new jaz_ts_utils_1.Signal();
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
+        this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addClientCommand("disconnect", "c.auth.disconnect");
         this.socket = tls.connect(this.config);
         this.socket.on("data", (dataBuffer) => {
             if (!this.tachyonModeEnabled) {
