@@ -38,6 +38,10 @@ export class TachyonClient {
     constructor(options: TachyonClientOptions) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
 
+        if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
+            this.config.rejectUnauthorized = false;
+        }
+
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
         this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");

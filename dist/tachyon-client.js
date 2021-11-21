@@ -29,6 +29,9 @@ class TachyonClient {
         this.tachyonModeEnabled = false;
         this.onCommand = new jaz_ts_utils_1.Signal();
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
+        if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
+            this.config.rejectUnauthorized = false;
+        }
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
         this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
