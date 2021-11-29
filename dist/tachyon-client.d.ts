@@ -22,10 +22,10 @@ export interface TachyonClient {
     disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
 }
 export declare class TachyonClient {
-    protected config: TachyonClientOptions;
-    protected socket: tls.TLSSocket;
-    protected tachyonModeEnabled: boolean;
-    protected onCommand: Signal<{
+    config: TachyonClientOptions;
+    socket: tls.TLSSocket;
+    tachyonModeEnabled: boolean;
+    onCommand: Signal<{
         [key: string]: unknown;
         cmd: string;
     }>;

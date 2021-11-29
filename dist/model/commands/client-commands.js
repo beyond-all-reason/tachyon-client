@@ -16,7 +16,8 @@ exports.clientCommandSchema = {
     "c.auth.login": typebox_1.Type.Object({
         token: typebox_1.Type.String(),
         lobby_name: typebox_1.Type.String(),
-        lobby_version: typebox_1.Type.String()
+        lobby_version: typebox_1.Type.String(),
+        lobby_hash: typebox_1.Type.String(),
     }),
     "c.auth.verify": typebox_1.Type.Object({
         token: typebox_1.Type.String(),

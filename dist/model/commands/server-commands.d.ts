@@ -11,13 +11,29 @@ export declare const serverCommandSchema: {
     }>]>;
     "s.auth.login": import("@sinclair/typebox").TObject<{
         result: import("@sinclair/typebox").TString;
-        user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TAny>;
         agreement: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
+        user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
+            id: import("@sinclair/typebox").TNumber;
+            springid: import("@sinclair/typebox").TNumber;
+            name: import("@sinclair/typebox").TString;
+            bot: import("@sinclair/typebox").TBoolean;
+            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TBoolean, import("@sinclair/typebox").TNull]>;
+            friend_requests: import("@sinclair/typebox").TAny;
+            friends: import("@sinclair/typebox").TAny;
+        }>>;
     }>;
     "s.auth.verify": import("@sinclair/typebox").TObject<{
         result: import("@sinclair/typebox").TString;
-        user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TAny>;
+        user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
+            id: import("@sinclair/typebox").TNumber;
+            springid: import("@sinclair/typebox").TNumber;
+            name: import("@sinclair/typebox").TString;
+            bot: import("@sinclair/typebox").TBoolean;
+            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TBoolean, import("@sinclair/typebox").TNull]>;
+            friend_requests: import("@sinclair/typebox").TAny;
+            friends: import("@sinclair/typebox").TAny;
+        }>>;
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     }>;
 };

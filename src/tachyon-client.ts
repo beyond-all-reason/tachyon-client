@@ -30,10 +30,10 @@ export interface TachyonClient {
 }
 
 export class TachyonClient {
-    protected config: TachyonClientOptions;
-    protected socket: tls.TLSSocket;
-    protected tachyonModeEnabled = false;
-    protected onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
+    public config: TachyonClientOptions;
+    public socket: tls.TLSSocket;
+    public tachyonModeEnabled = false;
+    public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
     constructor(options: TachyonClientOptions) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -42,11 +42,12 @@ export class TachyonClient {
             this.config.rejectUnauthorized = false;
         }
 
+        this.addClientCommand("disconnect", "c.auth.disconnect");
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
         this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addClientCommand("login", "c.auth.login", "s.auth.login");
         this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
-        this.addClientCommand("disconnect", "c.auth.disconnect");
 
         this.socket = tls.connect(this.config);
 
@@ -67,7 +68,7 @@ export class TachyonClient {
 
         this.socket.on("secureConnect", () => {
             if (this.config.verbose) {
-                console.log("Connected!");
+                console.log("secureConnect");
             }
         });
 
@@ -104,6 +105,9 @@ export class TachyonClient {
                     if (dataPart.slice(0, 2) === "OK") {
                         this.tachyonModeEnabled = true;
                         this.socket.off("data", onData);
+                        if (this.config.verbose) {
+                            console.log("tachyonModeEnabled");
+                        }
                         resolve();
                         return;
                     }

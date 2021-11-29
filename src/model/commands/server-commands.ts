@@ -1,5 +1,15 @@
 import { Type } from "@sinclair/typebox";
 
+const userSchema = Type.Object({
+    id: Type.Number(),
+    springid: Type.Number(),
+    name: Type.String(),
+    bot: Type.Boolean(),
+    clan_id: Type.Union([Type.Boolean(), Type.Null()]),
+    friend_requests: Type.Any(),
+    friends: Type.Any()
+});
+
 export const serverCommandSchema = {
     "s.system.pong": Type.Void(),
     "s.auth.register": Type.Object({
@@ -15,13 +25,13 @@ export const serverCommandSchema = {
     ]),
     "s.auth.login": Type.Object({
         result: Type.String(),
-        user: Type.Optional(Type.Any()),
         agreement: Type.Optional(Type.String()),
-        reason: Type.Optional(Type.String())
+        reason: Type.Optional(Type.String()),
+        user: Type.Optional(userSchema),
     }),
     "s.auth.verify": Type.Object({
         result: Type.String(),
-        user: Type.Optional(Type.Any()),
+        user: Type.Optional(userSchema),
         reason: Type.Optional(Type.String())
     })
 };

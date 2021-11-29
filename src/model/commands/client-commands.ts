@@ -14,7 +14,8 @@ export const clientCommandSchema = {
     "c.auth.login": Type.Object({
         token: Type.String(),
         lobby_name: Type.String(),
-        lobby_version: Type.String()
+        lobby_version: Type.String(),
+        lobby_hash: Type.String(),
     }),
     "c.auth.verify": Type.Object({
         token: Type.String(),

@@ -32,11 +32,12 @@ class TachyonClient {
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
+        this.addClientCommand("disconnect", "c.auth.disconnect");
         this.addClientCommand("ping", "c.system.ping", "s.system.pong");
         this.addClientCommand("register", "c.auth.register", "s.auth.register");
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addClientCommand("login", "c.auth.login", "s.auth.login");
         this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
-        this.addClientCommand("disconnect", "c.auth.disconnect");
         this.socket = tls.connect(this.config);
         this.socket.on("data", (dataBuffer) => {
             if (!this.tachyonModeEnabled) {
@@ -54,7 +55,7 @@ class TachyonClient {
         });
         this.socket.on("secureConnect", () => {
             if (this.config.verbose) {
-                console.log("Connected!");
+                console.log("secureConnect");
             }
         });
         this.socket.on("close", () => {
@@ -86,6 +87,9 @@ class TachyonClient {
                     if (dataPart.slice(0, 2) === "OK") {
                         this.tachyonModeEnabled = true;
                         this.socket.off("data", onData);
+                        if (this.config.verbose) {
+                            console.log("tachyonModeEnabled");
+                        }
                         resolve();
                         return;
                     }

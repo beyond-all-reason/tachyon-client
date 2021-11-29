@@ -13,6 +13,7 @@ export declare const clientCommandSchema: {
         token: import("@sinclair/typebox").TString;
         lobby_name: import("@sinclair/typebox").TString;
         lobby_version: import("@sinclair/typebox").TString;
+        lobby_hash: import("@sinclair/typebox").TString;
     }>;
     "c.auth.verify": import("@sinclair/typebox").TObject<{
         token: import("@sinclair/typebox").TString;
