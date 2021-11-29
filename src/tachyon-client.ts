@@ -31,7 +31,7 @@ export interface TachyonClient {
 
 export class TachyonClient {
     public config: TachyonClientOptions;
-    public socket: tls.TLSSocket;
+    public socket!: tls.TLSSocket;
     public tachyonModeEnabled = false;
     public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
@@ -48,73 +48,67 @@ export class TachyonClient {
         this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
         this.addClientCommand("login", "c.auth.login", "s.auth.login");
         this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
-
-        this.socket = tls.connect(this.config);
-
-        this.socket.on("data", (dataBuffer: Buffer) => {
-            if (!this.tachyonModeEnabled) {
-                return;
-            }
-            const data = dataBuffer.toString("utf8");
-            const gzipped = Buffer.from(data, "base64");
-            const response = gzip.unzipSync(gzipped);
-            const jsonString = response.toString("utf8");
-            const command = JSON.parse(jsonString);
-            if (this.config.verbose) {
-                console.log("RESPONSE:", command);
-            }
-            this.onCommand.dispatch(command);
-        });
-
-        this.socket.on("secureConnect", () => {
-            if (this.config.verbose) {
-                console.log("secureConnect");
-            }
-        });
-
-        this.socket.on("close", () => {
-            if (this.config.verbose) {
-                console.log("close");
-            }
-        });
-
-        this.socket.on("error", (err) => {
-            if (this.config.verbose) {
-                console.log("error", err);
-            }
-        });
-
-        this.socket.on("timeout", () => {
-            if (this.config.verbose) {
-                console.log("timeout");
-            }
-        });
-
-        this.socket.on("end", () => {
-            if (this.config.verbose) {
-                console.log("end");
-            }
-        });
     }
 
     public async connect() {
         return new Promise<void>(resolve => {
-            const onData = (dataBuffer: Buffer) => {
-                const dataParts = dataBuffer.toString("utf8").split("\n");
-                for (const dataPart of dataParts) {
-                    if (dataPart.slice(0, 2) === "OK") {
-                        this.tachyonModeEnabled = true;
-                        this.socket.off("data", onData);
-                        if (this.config.verbose) {
-                            console.log("tachyonModeEnabled");
+            this.socket = tls.connect(this.config);
+
+            this.socket.on("data", (dataBuffer: Buffer) => {
+                if (!this.tachyonModeEnabled) {
+                    const dataParts = dataBuffer.toString("utf8").split("\n");
+                    for (const dataPart of dataParts) {
+                        if (dataPart.slice(0, 2) === "OK") {
+                            this.tachyonModeEnabled = true;
+                            if (this.config.verbose) {
+                                console.log("tachyonModeEnabled");
+                            }
+                            resolve();
+                            return;
                         }
-                        resolve();
-                        return;
                     }
                 }
-            };
 
-            this.socket.on("data", onData);
+                const data = dataBuffer.toString("utf8");
+                const gzipped = Buffer.from(data, "base64");
+                const response = gzip.unzipSync(gzipped);
+                const jsonString = response.toString("utf8");
+                const command = JSON.parse(jsonString);
+                if (this.config.verbose) {
+                    console.log("RESPONSE:", command);
+                }
+                this.onCommand.dispatch(command);
+            });
+
+            this.socket.on("secureConnect", () => {
+                if (this.config.verbose) {
+                    console.log("secureConnect");
+                }
+            });
+
+            this.socket.on("close", () => {
+                if (this.config.verbose) {
+                    console.log("close");
+                }
+            });
+
+            this.socket.on("error", (err) => {
+                if (this.config.verbose) {
+                    console.log("error", err);
+                }
+            });
+
+            this.socket.on("timeout", () => {
+                if (this.config.verbose) {
+                    console.log("timeout");
+                }
+            });
+
+            this.socket.on("end", () => {
+                if (this.config.verbose) {
+                    console.log("end");
+                }
+            });
 
             this.socket.write("TACHYON" + "\n", "utf8");
         });
