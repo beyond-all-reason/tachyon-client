@@ -23,7 +23,9 @@ exports.TachyonClient = exports.defaultTachyonClientOptions = void 0;
 const jaz_ts_utils_1 = require("jaz-ts-utils");
 const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
-exports.defaultTachyonClientOptions = {};
+exports.defaultTachyonClientOptions = {
+    pingIntervalMs: 30000
+};
 class TachyonClient {
     constructor(options) {
         this.tachyonModeEnabled = false;
@@ -48,6 +50,9 @@ class TachyonClient {
                     for (const dataPart of dataParts) {
                         if (dataPart.slice(0, 2) === "OK") {
                             this.tachyonModeEnabled = true;
+                            this.pingIntervalId = setInterval(() => {
+                                this.ping();
+                            }, this.config.pingIntervalMs);
                             if (this.config.verbose) {
                                 console.log("tachyonModeEnabled");
                             }
@@ -71,9 +76,9 @@ class TachyonClient {
                     console.log("secureConnect");
                 }
             });
-            this.socket.on("close", () => {
+            this.socket.on("close", (data) => {
                 if (this.config.verbose) {
-                    console.log("close");
+                    console.log("close", data);
                 }
             });
             this.socket.on("error", (err) => {
@@ -81,14 +86,14 @@ class TachyonClient {
                     console.log("error", err);
                 }
             });
-            this.socket.on("timeout", () => {
+            this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
-                    console.log("timeout");
+                    console.log("timeout", data);
                 }
             });
-            this.socket.on("end", () => {
+            this.socket.on("end", (data) => {
                 if (this.config.verbose) {
-                    console.log("end");
+                    console.log("end", data);
                 }
             });
             this.socket.write("TACHYON" + "\n", "utf8");

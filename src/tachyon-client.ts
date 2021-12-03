@@ -10,9 +10,11 @@ export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
     verbose?: boolean;
+    pingIntervalMs?: number;
 }
 
 export const defaultTachyonClientOptions: Partial<TachyonClientOptions> = {
+    pingIntervalMs: 30000
 };
 
 export type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
@@ -34,6 +36,8 @@ export class TachyonClient {
     public socket!: tls.TLSSocket;
     public tachyonModeEnabled = false;
     public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
+
+    protected pingIntervalId?: NodeJS.Timeout;
 
     constructor(options: TachyonClientOptions) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -60,9 +64,15 @@ export class TachyonClient {
                     for (const dataPart of dataParts) {
                         if (dataPart.slice(0, 2) === "OK") {
                             this.tachyonModeEnabled = true;
+
+                            this.pingIntervalId = setInterval(() => {
+                                this.ping();
+                            }, this.config.pingIntervalMs);
+
                             if (this.config.verbose) {
                                 console.log("tachyonModeEnabled");
                             }
+
                             resolve();
                             return;
                         }
@@ -86,9 +96,9 @@ export class TachyonClient {
                 }
             });
 
-            this.socket.on("close", () => {
+            this.socket.on("close", (data) => {
                 if (this.config.verbose) {
-                    console.log("close");
+                    console.log("close", data);
                 }
             });
 
@@ -98,15 +108,15 @@ export class TachyonClient {
                 }
             });
 
-            this.socket.on("timeout", () => {
+            this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
-                    console.log("timeout");
+                    console.log("timeout", data);
                 }
             });
 
-            this.socket.on("end", () => {
+            this.socket.on("end", (data) => {
                 if (this.config.verbose) {
-                    console.log("end");
+                    console.log("end", data);
                 }
             });
 

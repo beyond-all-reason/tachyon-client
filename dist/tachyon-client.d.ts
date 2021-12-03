@@ -8,6 +8,7 @@ export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
     verbose?: boolean;
+    pingIntervalMs?: number;
 }
 export declare const defaultTachyonClientOptions: Partial<TachyonClientOptions>;
 export declare type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
@@ -29,6 +30,7 @@ export declare class TachyonClient {
         [key: string]: unknown;
         cmd: string;
     }>;
+    protected pingIntervalId?: NodeJS.Timeout;
     constructor(options: TachyonClientOptions);
     connect(): Promise<void>;
     rawRequest(request: Record<string, unknown>): void;
