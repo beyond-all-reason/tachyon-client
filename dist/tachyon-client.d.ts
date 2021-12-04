@@ -24,7 +24,7 @@ export interface TachyonClient {
 }
 export declare class TachyonClient {
     config: TachyonClientOptions;
-    socket: tls.TLSSocket;
+    socket?: tls.TLSSocket;
     tachyonModeEnabled: boolean;
     onCommand: Signal<{
         [key: string]: unknown;

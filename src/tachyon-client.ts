@@ -33,7 +33,7 @@ export interface TachyonClient {
 
 export class TachyonClient {
     public config: TachyonClientOptions;
-    public socket!: tls.TLSSocket;
+    public socket?: tls.TLSSocket;
     public tachyonModeEnabled = false;
     public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
@@ -133,7 +133,7 @@ export class TachyonClient {
             console.log("REQUEST:", request);
         }
 
-        this.socket.write(base64 + "\n");
+        this.socket?.write(base64 + "\n");
     }
 
     protected addClientCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S) {

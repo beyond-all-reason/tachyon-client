@@ -100,13 +100,14 @@ class TachyonClient {
         });
     }
     rawRequest(request) {
+        var _a;
         const jsonString = JSON.stringify(request);
         const gzipped = gzip.gzipSync(jsonString);
         const base64 = Buffer.from(gzipped).toString("base64");
         if (this.config.verbose) {
             console.log("REQUEST:", request);
         }
-        this.socket.write(base64 + "\n");
+        (_a = this.socket) === null || _a === void 0 ? void 0 : _a.write(base64 + "\n");
     }
     addClientCommand(name, clientCmd, serverCmd) {
         TachyonClient.prototype[name] = function (args) {
