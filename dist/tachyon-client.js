@@ -43,6 +43,10 @@ class TachyonClient {
     }
     async connect() {
         return new Promise((resolve, reject) => {
+            if (this.socket && this.socket.readable) {
+                resolve(); // already connected
+                return;
+            }
             this.socket = tls.connect(this.config);
             this.socket.on("data", (dataBuffer) => {
                 if (!this.tachyonModeEnabled) {
