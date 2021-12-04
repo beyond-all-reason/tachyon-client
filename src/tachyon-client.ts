@@ -55,7 +55,7 @@ export class TachyonClient {
     }
 
     public async connect() {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve, reject) => {
             this.socket = tls.connect(this.config);
 
             this.socket.on("data", (dataBuffer: Buffer) => {
@@ -106,6 +106,7 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     console.log("error", err);
                 }
+                reject(err);
             });
 
             this.socket.on("timeout", (data) => {

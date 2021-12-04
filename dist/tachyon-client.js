@@ -42,7 +42,7 @@ class TachyonClient {
         this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
     }
     async connect() {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             this.socket = tls.connect(this.config);
             this.socket.on("data", (dataBuffer) => {
                 if (!this.tachyonModeEnabled) {
@@ -85,6 +85,7 @@ class TachyonClient {
                 if (this.config.verbose) {
                     console.log("error", err);
                 }
+                reject(err);
             });
             this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
