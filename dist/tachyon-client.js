@@ -135,7 +135,7 @@ class TachyonClient {
         return this.responseSignals.get(type);
     }
     isLoggedIn() {
-        return this.isLoggedIn;
+        return this._isLoggedIn;
     }
     rawRequest(request) {
         var _a;

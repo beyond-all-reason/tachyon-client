@@ -168,7 +168,7 @@ export class TachyonClient {
     }
 
     public isLoggedIn() {
-        return this.isLoggedIn;
+        return this._isLoggedIn;
     }
 
     protected rawRequest(request: Record<string, unknown>) {
