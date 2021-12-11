@@ -33,5 +33,8 @@ export const serverCommandSchema = {
         result: Type.String(),
         user: Type.Optional(userSchema),
         reason: Type.Optional(Type.String())
+    }),
+    "s.lobby.query": Type.Object({
+
     })
 };

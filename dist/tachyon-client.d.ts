@@ -21,18 +21,21 @@ export interface TachyonClient {
     login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
     verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
     disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
+    getBattles(options: ClientCommandType<"c.lobby.query">): Promise<ServerCommandType<"s.lobby.query">>;
 }
 export declare class TachyonClient {
     config: TachyonClientOptions;
     socket?: tls.TLSSocket;
     tachyonModeEnabled: boolean;
-    onCommand: Signal<{
-        [key: string]: unknown;
-        cmd: string;
-    }>;
     protected pingIntervalId?: NodeJS.Timeout;
+    protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>>;
+    protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>>;
+    protected _isLoggedIn: boolean;
     constructor(options: TachyonClientOptions);
     connect(): Promise<void>;
-    rawRequest(request: Record<string, unknown>): void;
-    protected addClientCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S): void;
+    onRequest<T extends keyof typeof clientCommandSchema>(type: T): Signal<ClientCommandType<T>>;
+    onResponse<T extends keyof typeof serverCommandSchema>(type: T): Signal<ServerCommandType<T>>;
+    isLoggedIn(): () => any;
+    protected rawRequest(request: Record<string, unknown>): void;
+    protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S): void;
 }

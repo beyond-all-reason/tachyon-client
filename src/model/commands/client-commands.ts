@@ -22,4 +22,15 @@ export const clientCommandSchema = {
         code: Type.String(),
     }),
     "c.auth.disconnect": Type.Void(),
+    "c.lobby.query": Type.Union([Type.Object({
+        // id: Type.Optional(Type.Integer()),
+        // locked: Type.Optional(Type.Boolean()),
+        // started: Type.Optional(Type.Boolean()),
+        // player_count: Type.Optional(Type.Integer()),
+        // spectator_count: Type.Optional(Type.Integer()),
+        // user_count: Type.Optional(Type.Integer()),
+        // player_list: Type.Optional(Type.Integer()),
+        // spectator_list: Type.Optional(Type.Integer()),
+        // user_list: Type.Optional(Type.Integer())
+    }), Type.Void()])
 };

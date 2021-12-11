@@ -36,4 +36,5 @@ export declare const serverCommandSchema: {
         }>>;
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     }>;
+    "s.lobby.query": import("@sinclair/typebox").TObject<{}>;
 };

@@ -29,15 +29,19 @@ export interface TachyonClient {
     login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
     verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
     disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
+    getBattles(options: ClientCommandType<"c.lobby.query">): Promise<ServerCommandType<"s.lobby.query">>;
 }
 
 export class TachyonClient {
     public config: TachyonClientOptions;
     public socket?: tls.TLSSocket;
     public tachyonModeEnabled = false;
-    public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
+    //public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
     protected pingIntervalId?: NodeJS.Timeout;
+    protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>> = new Map();
+    protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>> = new Map();
+    protected _isLoggedIn = false;
 
     constructor(options: TachyonClientOptions) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -46,12 +50,13 @@ export class TachyonClient {
             this.config.rejectUnauthorized = false;
         }
 
-        this.addClientCommand("disconnect", "c.auth.disconnect");
-        this.addClientCommand("ping", "c.system.ping", "s.system.pong");
-        this.addClientCommand("register", "c.auth.register", "s.auth.register");
-        this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
-        this.addClientCommand("login", "c.auth.login", "s.auth.login");
-        this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addCommand("disconnect", "c.auth.disconnect");
+        this.addCommand("ping", "c.system.ping", "s.system.pong");
+        this.addCommand("register", "c.auth.register", "s.auth.register");
+        this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addCommand("login", "c.auth.login", "s.auth.login");
+        this.addCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
     }
 
     public async connect() {
@@ -92,7 +97,11 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     console.log("RESPONSE:", command);
                 }
-                this.onCommand.dispatch(command);
+
+                const responseSignal = this.responseSignals.get(command.cmd);
+                if (responseSignal) {
+                    responseSignal.dispatch(command);
+                }
             });
 
             this.socket.on("secureConnect", () => {
@@ -102,12 +111,14 @@ export class TachyonClient {
             });
 
             this.socket.on("close", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("close", data);
                 }
             });
 
             this.socket.on("error", (err) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("error", err);
                 }
@@ -115,22 +126,52 @@ export class TachyonClient {
             });
 
             this.socket.on("timeout", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("timeout", data);
                 }
             });
 
             this.socket.on("end", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("end", data);
                 }
+            });
+
+            this.onResponse("s.auth.login").add((data) => {
+                if (data.result === "success") {
+                    this._isLoggedIn = true;
+                }
+            });
+
+            this.onRequest("c.auth.disconnect").add(() => {
+                this._isLoggedIn = false;
             });
 
             this.socket.write("TACHYON" + "\n", "utf8");
         });
     }
 
-    public rawRequest(request: Record<string, unknown>) {
+    public onRequest<T extends keyof typeof clientCommandSchema>(type: T) : Signal<ClientCommandType<T>> {
+        if (!this.requestSignals.has(type)) {
+            this.requestSignals.set(type, new Signal());
+        }
+        return this.requestSignals.get(type) as Signal<ClientCommandType<T>>;
+    }
+
+    public onResponse<T extends keyof typeof serverCommandSchema>(type: T) : Signal<ServerCommandType<T>> {
+        if (!this.responseSignals.has(type)) {
+            this.responseSignals.set(type, new Signal());
+        }
+        return this.responseSignals.get(type) as Signal<ServerCommandType<T>>;
+    }
+
+    public isLoggedIn() {
+        return this.isLoggedIn;
+    }
+
+    protected rawRequest(request: Record<string, unknown>) {
         const jsonString = JSON.stringify(request);
         const gzipped = gzip.gzipSync(jsonString);
         const base64 = Buffer.from(gzipped).toString("base64");
@@ -142,15 +183,13 @@ export class TachyonClient {
         this.socket?.write(base64 + "\n");
     }
 
-    protected addClientCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S) {
+    protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S) {
         TachyonClient.prototype[name] = function(args?: Args) : Promise<ServerCommandType<S> | void> {
             return new Promise(resolve => {
                 if (serverCmd) {
-                    const onCommand = this.onCommand.add((command) => {
-                        if (command.cmd === serverCmd) {
-                            onCommand.destroy();
-                            resolve(command as ServerCommandType<S>);
-                        }
+                    const signalBinding = this.onResponse(serverCmd).add((data) => {
+                        signalBinding.destroy();
+                        resolve(data);
                     });
 
                     this.rawRequest({

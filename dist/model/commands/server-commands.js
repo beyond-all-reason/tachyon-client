@@ -34,6 +34,7 @@ exports.serverCommandSchema = {
         result: typebox_1.Type.String(),
         user: typebox_1.Type.Optional(userSchema),
         reason: typebox_1.Type.Optional(typebox_1.Type.String())
-    })
+    }),
+    "s.lobby.query": typebox_1.Type.Object({})
 };
 //# sourceMappingURL=server-commands.js.map

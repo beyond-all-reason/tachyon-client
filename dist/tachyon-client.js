@@ -29,17 +29,20 @@ exports.defaultTachyonClientOptions = {
 class TachyonClient {
     constructor(options) {
         this.tachyonModeEnabled = false;
-        this.onCommand = new jaz_ts_utils_1.Signal();
+        this.requestSignals = new Map();
+        this.responseSignals = new Map();
+        this._isLoggedIn = false;
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
-        this.addClientCommand("disconnect", "c.auth.disconnect");
-        this.addClientCommand("ping", "c.system.ping", "s.system.pong");
-        this.addClientCommand("register", "c.auth.register", "s.auth.register");
-        this.addClientCommand("getToken", "c.auth.get_token", "s.auth.get_token");
-        this.addClientCommand("login", "c.auth.login", "s.auth.login");
-        this.addClientCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addCommand("disconnect", "c.auth.disconnect");
+        this.addCommand("ping", "c.system.ping", "s.system.pong");
+        this.addCommand("register", "c.auth.register", "s.auth.register");
+        this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+        this.addCommand("login", "c.auth.login", "s.auth.login");
+        this.addCommand("verify", "c.auth.verify", "s.auth.verify");
+        this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
     }
     async connect() {
         return new Promise((resolve, reject) => {
@@ -73,7 +76,10 @@ class TachyonClient {
                 if (this.config.verbose) {
                     console.log("RESPONSE:", command);
                 }
-                this.onCommand.dispatch(command);
+                const responseSignal = this.responseSignals.get(command.cmd);
+                if (responseSignal) {
+                    responseSignal.dispatch(command);
+                }
             });
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
@@ -81,28 +87,55 @@ class TachyonClient {
                 }
             });
             this.socket.on("close", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("close", data);
                 }
             });
             this.socket.on("error", (err) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("error", err);
                 }
                 reject(err);
             });
             this.socket.on("timeout", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("timeout", data);
                 }
             });
             this.socket.on("end", (data) => {
+                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("end", data);
                 }
             });
+            this.onResponse("s.auth.login").add((data) => {
+                if (data.result === "success") {
+                    this._isLoggedIn = true;
+                }
+            });
+            this.onRequest("c.auth.disconnect").add(() => {
+                this._isLoggedIn = false;
+            });
             this.socket.write("TACHYON" + "\n", "utf8");
         });
+    }
+    onRequest(type) {
+        if (!this.requestSignals.has(type)) {
+            this.requestSignals.set(type, new jaz_ts_utils_1.Signal());
+        }
+        return this.requestSignals.get(type);
+    }
+    onResponse(type) {
+        if (!this.responseSignals.has(type)) {
+            this.responseSignals.set(type, new jaz_ts_utils_1.Signal());
+        }
+        return this.responseSignals.get(type);
+    }
+    isLoggedIn() {
+        return this.isLoggedIn;
     }
     rawRequest(request) {
         var _a;
@@ -114,15 +147,13 @@ class TachyonClient {
         }
         (_a = this.socket) === null || _a === void 0 ? void 0 : _a.write(base64 + "\n");
     }
-    addClientCommand(name, clientCmd, serverCmd) {
+    addCommand(name, clientCmd, serverCmd) {
         TachyonClient.prototype[name] = function (args) {
             return new Promise(resolve => {
                 if (serverCmd) {
-                    const onCommand = this.onCommand.add((command) => {
-                        if (command.cmd === serverCmd) {
-                            onCommand.destroy();
-                            resolve(command);
-                        }
+                    const signalBinding = this.onResponse(serverCmd).add((data) => {
+                        signalBinding.destroy();
+                        resolve(data);
                     });
                     this.rawRequest({
                         cmd: clientCmd,

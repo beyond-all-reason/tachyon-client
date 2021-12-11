@@ -20,4 +20,5 @@ export declare const clientCommandSchema: {
         code: import("@sinclair/typebox").TString;
     }>;
     "c.auth.disconnect": import("@sinclair/typebox").TVoid;
+    "c.lobby.query": import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TObject<{}>, import("@sinclair/typebox").TVoid]>;
 };

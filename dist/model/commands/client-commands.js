@@ -24,5 +24,16 @@ exports.clientCommandSchema = {
         code: typebox_1.Type.String(),
     }),
     "c.auth.disconnect": typebox_1.Type.Void(),
+    "c.lobby.query": typebox_1.Type.Union([typebox_1.Type.Object({
+        // id: Type.Optional(Type.Integer()),
+        // locked: Type.Optional(Type.Boolean()),
+        // started: Type.Optional(Type.Boolean()),
+        // player_count: Type.Optional(Type.Integer()),
+        // spectator_count: Type.Optional(Type.Integer()),
+        // user_count: Type.Optional(Type.Integer()),
+        // player_list: Type.Optional(Type.Integer()),
+        // spectator_list: Type.Optional(Type.Integer()),
+        // user_list: Type.Optional(Type.Integer())
+        }), typebox_1.Type.Void()])
 };
 //# sourceMappingURL=client-commands.js.map
