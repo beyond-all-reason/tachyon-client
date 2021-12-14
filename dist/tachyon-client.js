@@ -36,13 +36,6 @@ class TachyonClient {
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
-        this.addCommand("disconnect", "c.auth.disconnect");
-        this.addCommand("ping", "c.system.ping", "s.system.pong");
-        this.addCommand("register", "c.auth.register", "s.auth.register");
-        this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
-        this.addCommand("login", "c.auth.login", "s.auth.login");
-        this.addCommand("verify", "c.auth.verify", "s.auth.verify");
-        this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
     }
     async connect() {
         return new Promise((resolve, reject) => {
@@ -50,6 +43,15 @@ class TachyonClient {
                 resolve(); // already connected
                 return;
             }
+            this.requestSignals = new Map();
+            this.responseSignals = new Map();
+            this.addCommand("disconnect", "c.auth.disconnect");
+            this.addCommand("ping", "c.system.ping", "s.system.pong");
+            this.addCommand("register", "c.auth.register", "s.auth.register");
+            this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
+            this.addCommand("login", "c.auth.login", "s.auth.login");
+            this.addCommand("verify", "c.auth.verify", "s.auth.verify");
+            this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
             this.socket = tls.connect(this.config);
             this.socket.on("data", (dataBuffer) => {
                 if (!this.tachyonModeEnabled) {
@@ -57,9 +59,7 @@ class TachyonClient {
                     for (const dataPart of dataParts) {
                         if (dataPart.slice(0, 2) === "OK") {
                             this.tachyonModeEnabled = true;
-                            this.pingIntervalId = setInterval(() => {
-                                this.ping();
-                            }, this.config.pingIntervalMs);
+                            this.startPingInterval();
                             if (this.config.verbose) {
                                 console.log("tachyonModeEnabled");
                             }
@@ -86,29 +86,30 @@ class TachyonClient {
                     console.log("secureConnect");
                 }
             });
-            this.socket.on("close", (data) => {
+            this.socket.on("close", () => {
+                var _a;
                 this._isLoggedIn = false;
+                this.tachyonModeEnabled = false;
+                this.stopPingInterval();
+                (_a = this.socket) === null || _a === void 0 ? void 0 : _a.destroy();
                 if (this.config.verbose) {
-                    console.log("close", data);
+                    console.log("close");
                 }
             });
             this.socket.on("error", (err) => {
-                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("error", err);
                 }
                 reject(err);
             });
             this.socket.on("timeout", (data) => {
-                this._isLoggedIn = false;
                 if (this.config.verbose) {
                     console.log("timeout", data);
                 }
             });
-            this.socket.on("end", (data) => {
-                this._isLoggedIn = false;
+            this.socket.on("end", () => {
                 if (this.config.verbose) {
-                    console.log("end", data);
+                    console.log("end");
                 }
             });
             this.onResponse("s.auth.login").add((data) => {
@@ -149,7 +150,11 @@ class TachyonClient {
     }
     addCommand(name, clientCmd, serverCmd) {
         TachyonClient.prototype[name] = function (args) {
-            return new Promise(resolve => {
+            return new Promise((resolve, reject) => {
+                var _a;
+                if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
+                    reject("Not connected");
+                }
                 if (serverCmd) {
                     const signalBinding = this.onResponse(serverCmd).add((data) => {
                         signalBinding.destroy();
@@ -169,6 +174,16 @@ class TachyonClient {
                 }
             });
         };
+    }
+    startPingInterval() {
+        this.pingIntervalId = setInterval(() => {
+            this.ping();
+        }, this.config.pingIntervalMs);
+    }
+    stopPingInterval() {
+        if (this.pingIntervalId) {
+            clearInterval(this.pingIntervalId);
+        }
     }
 }
 exports.TachyonClient = TachyonClient;

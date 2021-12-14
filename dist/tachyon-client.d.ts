@@ -38,4 +38,6 @@ export declare class TachyonClient {
     isLoggedIn(): boolean;
     protected rawRequest(request: Record<string, unknown>): void;
     protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S): void;
+    protected startPingInterval(): void;
+    protected stopPingInterval(): void;
 }
