@@ -206,7 +206,16 @@ export class TachyonClient {
                         cmd: clientCmd,
                         ...args
                     });
-                    resolve();
+                    if (clientCmd === "c.auth.disconnect") {
+                        const closeBinding = () => {
+                            this.socket?.off("close", closeBinding);
+                            resolve();
+                        };
+                        this.socket?.on("close", closeBinding);
+                    } else {
+                        console.error(`No async handler for ${clientCmd}`);
+                        resolve();
+                    }
                 }
             });
         };

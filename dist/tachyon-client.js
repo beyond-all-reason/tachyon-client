@@ -151,7 +151,7 @@ class TachyonClient {
     addCommand(name, clientCmd, serverCmd) {
         TachyonClient.prototype[name] = function (args) {
             return new Promise((resolve, reject) => {
-                var _a;
+                var _a, _b;
                 if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
                     reject("Not connected");
                 }
@@ -170,7 +170,18 @@ class TachyonClient {
                         cmd: clientCmd,
                         ...args
                     });
-                    resolve();
+                    if (clientCmd === "c.auth.disconnect") {
+                        const closeBinding = () => {
+                            var _a;
+                            (_a = this.socket) === null || _a === void 0 ? void 0 : _a.off("close", closeBinding);
+                            resolve();
+                        };
+                        (_b = this.socket) === null || _b === void 0 ? void 0 : _b.on("close", closeBinding);
+                    }
+                    else {
+                        console.error(`No async handler for ${clientCmd}`);
+                        resolve();
+                    }
                 }
             });
         };
