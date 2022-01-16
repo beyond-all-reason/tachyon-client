@@ -5,6 +5,7 @@ import * as gzip from "zlib";
 
 import { clientCommandSchema } from "~/model/commands/client-commands";
 import { serverCommandSchema } from "~/model/commands/server-commands";
+import { NotConnectedError, ServerClosedError } from "~/model/errors";
 
 export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
@@ -127,7 +128,7 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     console.log(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
-                reject("server unexpectedly closed the connection");
+                reject(new ServerClosedError());
             });
 
             this.socket.on("error", (err) => {
@@ -191,7 +192,7 @@ export class TachyonClient {
         TachyonClient.prototype[name] = function(args?: Args) : Promise<ServerCommandType<S> | void> {
             return new Promise((resolve, reject) => {
                 if (!this.socket?.readable) {
-                    reject("Not connected");
+                    reject(new NotConnectedError());
                 }
 
                 if (this.requestClosedBinding) {
@@ -201,7 +202,7 @@ export class TachyonClient {
                     if (clientCmd === "c.auth.disconnect") {
                         resolve();
                     } else {
-                        reject("Server ended the connection");
+                        reject(new ServerClosedError());
                     }
                 });
 

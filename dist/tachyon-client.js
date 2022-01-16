@@ -23,6 +23,7 @@ exports.TachyonClient = exports.defaultTachyonClientOptions = void 0;
 const jaz_ts_utils_1 = require("jaz-ts-utils");
 const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
+const errors_1 = require("./model/errors");
 exports.defaultTachyonClientOptions = {
     pingIntervalMs: 30000
 };
@@ -100,7 +101,7 @@ class TachyonClient {
                 if (this.config.verbose) {
                     console.log(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
-                reject("server unexpectedly closed the connection");
+                reject(new errors_1.ServerClosedError());
             });
             this.socket.on("error", (err) => {
                 if (this.config.verbose) {
@@ -154,7 +155,7 @@ class TachyonClient {
             return new Promise((resolve, reject) => {
                 var _a;
                 if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
-                    reject("Not connected");
+                    reject(new errors_1.NotConnectedError());
                 }
                 if (this.requestClosedBinding) {
                     this.requestClosedBinding.destroy();
@@ -164,7 +165,7 @@ class TachyonClient {
                         resolve();
                     }
                     else {
-                        reject("Server ended the connection");
+                        reject(new errors_1.ServerClosedError());
                     }
                 });
                 if (serverCmd) {
