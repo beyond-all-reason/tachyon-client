@@ -29,6 +29,7 @@ exports.defaultTachyonClientOptions = {
 class TachyonClient {
     constructor(options) {
         this.tachyonModeEnabled = false;
+        this.onClose = new jaz_ts_utils_1.Signal();
         this.requestSignals = new Map();
         this.responseSignals = new Map();
         this._isLoggedIn = false;
@@ -83,33 +84,33 @@ class TachyonClient {
             });
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
-                    console.log("secureConnect");
+                    console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
             });
+            this.onClose.disposeAll();
             this.socket.on("close", () => {
+                this.onClose.dispatch();
+            });
+            this.onClose.add(() => {
                 var _a;
                 this._isLoggedIn = false;
                 this.tachyonModeEnabled = false;
                 this.stopPingInterval();
                 (_a = this.socket) === null || _a === void 0 ? void 0 : _a.destroy();
                 if (this.config.verbose) {
-                    console.log("close");
+                    console.log(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
+                reject("server unexpectedly closed the connection");
             });
             this.socket.on("error", (err) => {
                 if (this.config.verbose) {
-                    console.log("error", err);
+                    console.error("error", err);
                 }
                 reject(err);
             });
             this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
                     console.log("timeout", data);
-                }
-            });
-            this.socket.on("end", () => {
-                if (this.config.verbose) {
-                    console.log("end");
                 }
             });
             this.onResponse("s.auth.login").add((data) => {
@@ -151,37 +152,31 @@ class TachyonClient {
     addCommand(name, clientCmd, serverCmd) {
         TachyonClient.prototype[name] = function (args) {
             return new Promise((resolve, reject) => {
-                var _a, _b;
+                var _a;
                 if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
                     reject("Not connected");
                 }
+                if (this.requestClosedBinding) {
+                    this.requestClosedBinding.destroy();
+                }
+                this.requestClosedBinding = this.onClose.add(() => {
+                    if (clientCmd === "c.auth.disconnect") {
+                        resolve();
+                    }
+                    else {
+                        reject("Server ended the connection");
+                    }
+                });
                 if (serverCmd) {
                     const signalBinding = this.onResponse(serverCmd).add((data) => {
                         signalBinding.destroy();
                         resolve(data);
                     });
-                    this.rawRequest({
-                        cmd: clientCmd,
-                        ...args
-                    });
+                    this.rawRequest({ cmd: clientCmd, ...args });
                 }
                 else {
-                    this.rawRequest({
-                        cmd: clientCmd,
-                        ...args
-                    });
-                    if (clientCmd === "c.auth.disconnect") {
-                        const closeBinding = () => {
-                            var _a;
-                            (_a = this.socket) === null || _a === void 0 ? void 0 : _a.off("close", closeBinding);
-                            resolve();
-                        };
-                        (_b = this.socket) === null || _b === void 0 ? void 0 : _b.on("close", closeBinding);
-                    }
-                    else {
-                        console.error(`No async handler for ${clientCmd}`);
-                        resolve();
-                    }
+                    this.rawRequest({ cmd: clientCmd, ...args });
+                    resolve();
                 }
             });
         };

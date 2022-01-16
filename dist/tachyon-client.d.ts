@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { Static } from "@sinclair/typebox";
-import { Signal } from "jaz-ts-utils";
+import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
 import { clientCommandSchema } from "./model/commands/client-commands";
 import { serverCommandSchema } from "./model/commands/server-commands";
@@ -27,9 +27,11 @@ export declare class TachyonClient {
     config: TachyonClientOptions;
     socket?: tls.TLSSocket;
     tachyonModeEnabled: boolean;
+    onClose: Signal<void>;
     protected pingIntervalId?: NodeJS.Timeout;
     protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>>;
     protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>>;
+    protected requestClosedBinding?: SignalBinding;
     protected _isLoggedIn: boolean;
     constructor(options: TachyonClientOptions);
     connect(): Promise<void>;

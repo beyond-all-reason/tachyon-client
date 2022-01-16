@@ -1,5 +1,5 @@
 import { Static } from "@sinclair/typebox";
-import { Signal } from "jaz-ts-utils";
+import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
 import * as gzip from "zlib";
 
@@ -36,11 +36,13 @@ export class TachyonClient {
     public config: TachyonClientOptions;
     public socket?: tls.TLSSocket;
     public tachyonModeEnabled = false;
+    public onClose = new Signal<void>();
     //public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
     protected pingIntervalId?: NodeJS.Timeout;
     protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>> = new Map();
     protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>> = new Map();
+    protected requestClosedBinding?: SignalBinding;
     protected _isLoggedIn = false;
 
     constructor(options: TachyonClientOptions) {
@@ -107,23 +109,30 @@ export class TachyonClient {
 
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
-                    console.log("secureConnect");
+                    console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
             });
+            
+            this.onClose.disposeAll();
 
             this.socket.on("close", () => {
+                this.onClose.dispatch();
+            });
+            
+            this.onClose.add(() => {
                 this._isLoggedIn = false;
                 this.tachyonModeEnabled = false;
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
-                    console.log("close");
+                    console.log(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
+                reject("server unexpectedly closed the connection");
             });
 
             this.socket.on("error", (err) => {
                 if (this.config.verbose) {
-                    console.log("error", err);
+                    console.error("error", err);
                 }
                 reject(err);
             });
@@ -131,12 +140,6 @@ export class TachyonClient {
             this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
                     console.log("timeout", data);
-                }
-            });
-
-            this.socket.on("end", () => {
-                if (this.config.verbose) {
-                    console.log("end");
                 }
             });
 
@@ -191,31 +194,28 @@ export class TachyonClient {
                     reject("Not connected");
                 }
 
+                if (this.requestClosedBinding) {
+                    this.requestClosedBinding.destroy();
+                }
+                this.requestClosedBinding = this.onClose.add(() => {
+                    if (clientCmd === "c.auth.disconnect") {
+                        resolve();
+                    } else {
+                        reject("Server ended the connection");
+                    }
+                });
+
                 if (serverCmd) {
                     const signalBinding = this.onResponse(serverCmd).add((data) => {
                         signalBinding.destroy();
                         resolve(data);
                     });
 
-                    this.rawRequest({
-                        cmd: clientCmd,
-                        ...args
-                    });
+                    this.rawRequest({ cmd: clientCmd, ...args });
                 } else {
-                    this.rawRequest({
-                        cmd: clientCmd,
-                        ...args
-                    });
-                    if (clientCmd === "c.auth.disconnect") {
-                        const closeBinding = () => {
-                            this.socket?.off("close", closeBinding);
-                            resolve();
-                        };
-                        this.socket?.on("close", closeBinding);
-                    } else {
-                        console.error(`No async handler for ${clientCmd}`);
-                        resolve();
-                    }
+                    this.rawRequest({ cmd: clientCmd, ...args });
+
+                    resolve();
                 }
             });
         };
