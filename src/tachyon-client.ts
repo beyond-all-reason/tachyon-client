@@ -36,7 +36,6 @@ export interface TachyonClient {
 export class TachyonClient {
     public config: TachyonClientOptions;
     public socket?: tls.TLSSocket;
-    public tachyonModeEnabled = false;
     public onClose = new Signal<void>();
     //public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
@@ -75,24 +74,6 @@ export class TachyonClient {
             this.socket = tls.connect(this.config);
 
             this.socket.on("data", (dataBuffer: Buffer) => {
-                if (!this.tachyonModeEnabled) {
-                    const dataParts = dataBuffer.toString("utf8").split("\n");
-                    for (const dataPart of dataParts) {
-                        if (dataPart.slice(0, 2) === "OK") {
-                            this.tachyonModeEnabled = true;
-
-                            this.startPingInterval();
-
-                            if (this.config.verbose) {
-                                console.log("tachyonModeEnabled");
-                            }
-
-                            resolve();
-                            return;
-                        }
-                    }
-                }
-
                 const data = dataBuffer.toString("utf8");
                 const gzipped = Buffer.from(data, "base64");
                 const response = gzip.unzipSync(gzipped);
@@ -106,12 +87,17 @@ export class TachyonClient {
                 if (responseSignal) {
                     responseSignal.dispatch(command);
                 }
+
+                if (command.error || command.result === "error") {
+                    reject(command);
+                }
             });
 
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
                     console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
+                resolve();
             });
             
             this.onClose.disposeAll();
@@ -122,7 +108,6 @@ export class TachyonClient {
             
             this.onClose.add(() => {
                 this._isLoggedIn = false;
-                this.tachyonModeEnabled = false;
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
@@ -153,8 +138,6 @@ export class TachyonClient {
             this.onRequest("c.auth.disconnect").add(() => {
                 this._isLoggedIn = false;
             });
-
-            this.socket.write("TACHYON" + "\n", "utf8");
         });
     }
 

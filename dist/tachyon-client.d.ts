@@ -26,7 +26,6 @@ export interface TachyonClient {
 export declare class TachyonClient {
     config: TachyonClientOptions;
     socket?: tls.TLSSocket;
-    tachyonModeEnabled: boolean;
     onClose: Signal<void>;
     protected pingIntervalId?: NodeJS.Timeout;
     protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>>;

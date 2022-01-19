@@ -29,7 +29,6 @@ exports.defaultTachyonClientOptions = {
 };
 class TachyonClient {
     constructor(options) {
-        this.tachyonModeEnabled = false;
         this.onClose = new jaz_ts_utils_1.Signal();
         this.requestSignals = new Map();
         this.responseSignals = new Map();
@@ -56,20 +55,6 @@ class TachyonClient {
             this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
             this.socket = tls.connect(this.config);
             this.socket.on("data", (dataBuffer) => {
-                if (!this.tachyonModeEnabled) {
-                    const dataParts = dataBuffer.toString("utf8").split("\n");
-                    for (const dataPart of dataParts) {
-                        if (dataPart.slice(0, 2) === "OK") {
-                            this.tachyonModeEnabled = true;
-                            this.startPingInterval();
-                            if (this.config.verbose) {
-                                console.log("tachyonModeEnabled");
-                            }
-                            resolve();
-                            return;
-                        }
-                    }
-                }
                 const data = dataBuffer.toString("utf8");
                 const gzipped = Buffer.from(data, "base64");
                 const response = gzip.unzipSync(gzipped);
@@ -82,11 +67,15 @@ class TachyonClient {
                 if (responseSignal) {
                     responseSignal.dispatch(command);
                 }
+                if (command.error || command.result === "error") {
+                    reject(command);
+                }
             });
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
                     console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
+                resolve();
             });
             this.onClose.disposeAll();
             this.socket.on("close", () => {
@@ -95,7 +84,6 @@ class TachyonClient {
             this.onClose.add(() => {
                 var _a;
                 this._isLoggedIn = false;
-                this.tachyonModeEnabled = false;
                 this.stopPingInterval();
                 (_a = this.socket) === null || _a === void 0 ? void 0 : _a.destroy();
                 if (this.config.verbose) {
@@ -122,7 +110,6 @@ class TachyonClient {
             this.onRequest("c.auth.disconnect").add(() => {
                 this._isLoggedIn = false;
             });
-            this.socket.write("TACHYON" + "\n", "utf8");
         });
     }
     onRequest(type) {
