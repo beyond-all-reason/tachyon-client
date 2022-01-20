@@ -31,12 +31,14 @@ export declare class TachyonClient {
     protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>>;
     protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>>;
     protected requestClosedBinding?: SignalBinding;
-    protected _isLoggedIn: boolean;
+    protected loggedIn: boolean;
+    protected connected: boolean;
     constructor(options: TachyonClientOptions);
     connect(): Promise<void>;
     onRequest<T extends keyof typeof clientCommandSchema>(type: T): Signal<ClientCommandType<T>>;
     onResponse<T extends keyof typeof serverCommandSchema>(type: T): Signal<ServerCommandType<T>>;
     isLoggedIn(): boolean;
+    isConnected(): boolean;
     protected rawRequest(request: Record<string, unknown>): void;
     protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S): void;
     protected startPingInterval(): void;

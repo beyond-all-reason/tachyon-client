@@ -43,7 +43,8 @@ export class TachyonClient {
     protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>> = new Map();
     protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>> = new Map();
     protected requestClosedBinding?: SignalBinding;
-    protected _isLoggedIn = false;
+    protected loggedIn = false;
+    protected connected = false;
 
     constructor(options: TachyonClientOptions) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -97,6 +98,8 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
+                this.connected = true;
+                this.startPingInterval();
                 resolve();
             });
             
@@ -107,7 +110,7 @@ export class TachyonClient {
             });
             
             this.onClose.add(() => {
-                this._isLoggedIn = false;
+                this.loggedIn = false;
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
@@ -131,12 +134,12 @@ export class TachyonClient {
 
             this.onResponse("s.auth.login").add((data) => {
                 if (data.result === "success") {
-                    this._isLoggedIn = true;
+                    this.loggedIn = true;
                 }
             });
 
             this.onRequest("c.auth.disconnect").add(() => {
-                this._isLoggedIn = false;
+                this.loggedIn = false;
             });
         });
     }
@@ -156,7 +159,11 @@ export class TachyonClient {
     }
 
     public isLoggedIn() {
-        return this._isLoggedIn;
+        return this.loggedIn;
+    }
+
+    public isConnected() {
+        return this.connected;
     }
 
     protected rawRequest(request: Record<string, unknown>) {

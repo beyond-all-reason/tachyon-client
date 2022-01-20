@@ -32,7 +32,8 @@ class TachyonClient {
         this.onClose = new jaz_ts_utils_1.Signal();
         this.requestSignals = new Map();
         this.responseSignals = new Map();
-        this._isLoggedIn = false;
+        this.loggedIn = false;
+        this.connected = false;
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
@@ -75,6 +76,8 @@ class TachyonClient {
                 if (this.config.verbose) {
                     console.log(`connected to ${this.config.host}:${this.config.port}`);
                 }
+                this.connected = true;
+                this.startPingInterval();
                 resolve();
             });
             this.onClose.disposeAll();
@@ -83,7 +86,7 @@ class TachyonClient {
             });
             this.onClose.add(() => {
                 var _a;
-                this._isLoggedIn = false;
+                this.loggedIn = false;
                 this.stopPingInterval();
                 (_a = this.socket) === null || _a === void 0 ? void 0 : _a.destroy();
                 if (this.config.verbose) {
@@ -104,11 +107,11 @@ class TachyonClient {
             });
             this.onResponse("s.auth.login").add((data) => {
                 if (data.result === "success") {
-                    this._isLoggedIn = true;
+                    this.loggedIn = true;
                 }
             });
             this.onRequest("c.auth.disconnect").add(() => {
-                this._isLoggedIn = false;
+                this.loggedIn = false;
             });
         });
     }
@@ -125,7 +128,10 @@ class TachyonClient {
         return this.responseSignals.get(type);
     }
     isLoggedIn() {
-        return this._isLoggedIn;
+        return this.loggedIn;
+    }
+    isConnected() {
+        return this.connected;
     }
     rawRequest(request) {
         var _a;
