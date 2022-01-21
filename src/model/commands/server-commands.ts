@@ -5,7 +5,7 @@ const userSchema = Type.Object({
     springid: Type.Number(),
     name: Type.String(),
     bot: Type.Boolean(),
-    clan_id: Type.Union([Type.Boolean(), Type.Null()]),
+    clan_id: Type.Union([Type.Number(), Type.Null()]),
     friend_requests: Type.Any(),
     friends: Type.Any()
 });

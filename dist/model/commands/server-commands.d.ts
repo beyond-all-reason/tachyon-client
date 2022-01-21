@@ -18,7 +18,7 @@ export declare const serverCommandSchema: {
             springid: import("@sinclair/typebox").TNumber;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
-            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TBoolean, import("@sinclair/typebox").TNull]>;
+            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
             friend_requests: import("@sinclair/typebox").TAny;
             friends: import("@sinclair/typebox").TAny;
         }>>;
@@ -30,7 +30,7 @@ export declare const serverCommandSchema: {
             springid: import("@sinclair/typebox").TNumber;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
-            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TBoolean, import("@sinclair/typebox").TNull]>;
+            clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
             friend_requests: import("@sinclair/typebox").TAny;
             friends: import("@sinclair/typebox").TAny;
         }>>;

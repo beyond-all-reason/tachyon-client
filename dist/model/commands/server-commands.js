@@ -7,7 +7,7 @@ const userSchema = typebox_1.Type.Object({
     springid: typebox_1.Type.Number(),
     name: typebox_1.Type.String(),
     bot: typebox_1.Type.Boolean(),
-    clan_id: typebox_1.Type.Union([typebox_1.Type.Boolean(), typebox_1.Type.Null()]),
+    clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
     friend_requests: typebox_1.Type.Any(),
     friends: typebox_1.Type.Any()
 });
