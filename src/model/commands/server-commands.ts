@@ -2,12 +2,12 @@ import { Type } from "@sinclair/typebox";
 
 const userSchema = Type.Object({
     id: Type.Number(),
-    springid: Type.String(),
+    springid: Type.Union([Type.Number(), Type.String()]), // TODO: Server will fix this
     name: Type.String(),
     bot: Type.Boolean(),
     clan_id: Type.Union([Type.Number(), Type.Null()]),
-    friend_requests: Type.Any(),
-    friends: Type.Any()
+    friend_requests: Type.Array(Type.Number()),
+    friends: Type.Array(Type.Number())
 });
 
 export const serverCommandSchema = {

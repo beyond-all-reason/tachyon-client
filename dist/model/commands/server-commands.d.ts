@@ -15,24 +15,24 @@ export declare const serverCommandSchema: {
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
         user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;
-            springid: import("@sinclair/typebox").TString;
+            springid: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TString]>;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
-            friend_requests: import("@sinclair/typebox").TAny;
-            friends: import("@sinclair/typebox").TAny;
+            friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
         }>>;
     }>;
     "s.auth.verify": import("@sinclair/typebox").TObject<{
         result: import("@sinclair/typebox").TString;
         user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;
-            springid: import("@sinclair/typebox").TString;
+            springid: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TString]>;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
-            friend_requests: import("@sinclair/typebox").TAny;
-            friends: import("@sinclair/typebox").TAny;
+            friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
         }>>;
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     }>;

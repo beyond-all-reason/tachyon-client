@@ -4,12 +4,12 @@ exports.serverCommandSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
 const userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
-    springid: typebox_1.Type.String(),
+    springid: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.String()]),
     name: typebox_1.Type.String(),
     bot: typebox_1.Type.Boolean(),
     clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
-    friend_requests: typebox_1.Type.Any(),
-    friends: typebox_1.Type.Any()
+    friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
+    friends: typebox_1.Type.Array(typebox_1.Type.Number())
 });
 exports.serverCommandSchema = {
     "s.system.pong": typebox_1.Type.Void(),
