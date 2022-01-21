@@ -2,7 +2,7 @@ import { Type } from "@sinclair/typebox";
 
 const userSchema = Type.Object({
     id: Type.Number(),
-    springid: Type.Number(),
+    springid: Type.String(),
     name: Type.String(),
     bot: Type.Boolean(),
     clan_id: Type.Union([Type.Number(), Type.Null()]),

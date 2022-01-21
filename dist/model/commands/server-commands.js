@@ -4,7 +4,7 @@ exports.serverCommandSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
 const userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
-    springid: typebox_1.Type.Number(),
+    springid: typebox_1.Type.String(),
     name: typebox_1.Type.String(),
     bot: typebox_1.Type.Boolean(),
     clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),

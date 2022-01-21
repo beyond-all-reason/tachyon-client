@@ -15,7 +15,7 @@ export declare const serverCommandSchema: {
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
         user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;
-            springid: import("@sinclair/typebox").TNumber;
+            springid: import("@sinclair/typebox").TString;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
@@ -27,7 +27,7 @@ export declare const serverCommandSchema: {
         result: import("@sinclair/typebox").TString;
         user: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;
-            springid: import("@sinclair/typebox").TNumber;
+            springid: import("@sinclair/typebox").TString;
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
