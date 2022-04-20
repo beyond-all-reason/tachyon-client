@@ -1,6 +1,7 @@
 import { Static } from "@sinclair/typebox";
 import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
+import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
 
 import { clientCommandSchema } from "~/model/commands/client-commands";
@@ -10,12 +11,15 @@ import { NotConnectedError, ServerClosedError } from "~/model/errors";
 export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
-    verbose?: boolean;
-    pingIntervalMs?: number;
+    verbose: boolean;
+    pingIntervalMs: number;
+    logMethod: (message?: any, ...optionalParams: any[]) => void;
 }
 
-export const defaultTachyonClientOptions: Partial<TachyonClientOptions> = {
-    pingIntervalMs: 30000
+export const defaultTachyonClientOptions = {
+    verbose: true,
+    pingIntervalMs: 30000,
+    logMethod: console.log,
 };
 
 export type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
@@ -46,7 +50,7 @@ export class TachyonClient {
     protected loggedIn = false;
     protected connected = false;
 
-    constructor(options: TachyonClientOptions) {
+    constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
 
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
@@ -81,7 +85,7 @@ export class TachyonClient {
                 const jsonString = response.toString("utf8");
                 const command = JSON.parse(jsonString);
                 if (this.config.verbose) {
-                    console.log("RESPONSE:", command);
+                    this.config.logMethod("RESPONSE:", command);
                 }
 
                 const responseSignal = this.responseSignals.get(command.cmd);
@@ -96,7 +100,7 @@ export class TachyonClient {
 
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
-                    console.log(`connected to ${this.config.host}:${this.config.port}`);
+                    this.config.logMethod(`connected to ${this.config.host}:${this.config.port}`);
                 }
                 this.connected = true;
                 this.startPingInterval();
@@ -114,7 +118,7 @@ export class TachyonClient {
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
-                    console.log(`disconnected from ${this.config.host}:${this.config.port}`);
+                    this.config.logMethod(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
                 reject(new ServerClosedError());
             });
@@ -128,7 +132,7 @@ export class TachyonClient {
 
             this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
-                    console.log("timeout", data);
+                    this.config.logMethod("timeout", data);
                 }
             });
 
@@ -172,7 +176,7 @@ export class TachyonClient {
         const base64 = Buffer.from(gzipped).toString("base64");
 
         if (this.config.verbose) {
-            console.log("REQUEST:", request);
+            this.config.logMethod("REQUEST:", request);
         }
 
         this.socket?.write(base64 + "\n");

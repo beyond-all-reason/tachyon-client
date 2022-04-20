@@ -25,7 +25,9 @@ const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
 const errors_1 = require("./model/errors");
 exports.defaultTachyonClientOptions = {
-    pingIntervalMs: 30000
+    verbose: true,
+    pingIntervalMs: 30000,
+    logMethod: console.log,
 };
 class TachyonClient {
     constructor(options) {
@@ -62,7 +64,7 @@ class TachyonClient {
                 const jsonString = response.toString("utf8");
                 const command = JSON.parse(jsonString);
                 if (this.config.verbose) {
-                    console.log("RESPONSE:", command);
+                    this.config.logMethod("RESPONSE:", command);
                 }
                 const responseSignal = this.responseSignals.get(command.cmd);
                 if (responseSignal) {
@@ -74,7 +76,7 @@ class TachyonClient {
             });
             this.socket.on("secureConnect", () => {
                 if (this.config.verbose) {
-                    console.log(`connected to ${this.config.host}:${this.config.port}`);
+                    this.config.logMethod(`connected to ${this.config.host}:${this.config.port}`);
                 }
                 this.connected = true;
                 this.startPingInterval();
@@ -90,7 +92,7 @@ class TachyonClient {
                 this.stopPingInterval();
                 (_a = this.socket) === null || _a === void 0 ? void 0 : _a.destroy();
                 if (this.config.verbose) {
-                    console.log(`disconnected from ${this.config.host}:${this.config.port}`);
+                    this.config.logMethod(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
                 reject(new errors_1.ServerClosedError());
             });
@@ -102,7 +104,7 @@ class TachyonClient {
             });
             this.socket.on("timeout", (data) => {
                 if (this.config.verbose) {
-                    console.log("timeout", data);
+                    this.config.logMethod("timeout", data);
                 }
             });
             this.onResponse("s.auth.login").add((data) => {
@@ -139,7 +141,7 @@ class TachyonClient {
         const gzipped = gzip.gzipSync(jsonString);
         const base64 = Buffer.from(gzipped).toString("base64");
         if (this.config.verbose) {
-            console.log("REQUEST:", request);
+            this.config.logMethod("REQUEST:", request);
         }
         (_a = this.socket) === null || _a === void 0 ? void 0 : _a.write(base64 + "\n");
     }

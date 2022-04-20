@@ -2,15 +2,21 @@
 import { Static } from "@sinclair/typebox";
 import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
+import { SetOptional } from "type-fest";
 import { clientCommandSchema } from "./model/commands/client-commands";
 import { serverCommandSchema } from "./model/commands/server-commands";
 export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
-    verbose?: boolean;
-    pingIntervalMs?: number;
+    verbose: boolean;
+    pingIntervalMs: number;
+    logMethod: (message?: any, ...optionalParams: any[]) => void;
 }
-export declare const defaultTachyonClientOptions: Partial<TachyonClientOptions>;
+export declare const defaultTachyonClientOptions: {
+    verbose: boolean;
+    pingIntervalMs: number;
+    logMethod: (message?: any, ...optionalParams: any[]) => void;
+};
 export declare type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
 export declare type ServerCommandType<T> = T extends keyof typeof serverCommandSchema ? Static<typeof serverCommandSchema[T]> : void;
 export interface TachyonClient {
@@ -33,7 +39,7 @@ export declare class TachyonClient {
     protected requestClosedBinding?: SignalBinding;
     protected loggedIn: boolean;
     protected connected: boolean;
-    constructor(options: TachyonClientOptions);
+    constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>);
     connect(): Promise<void>;
     onRequest<T extends keyof typeof clientCommandSchema>(type: T): Signal<ClientCommandType<T>>;
     onResponse<T extends keyof typeof serverCommandSchema>(type: T): Signal<ServerCommandType<T>>;

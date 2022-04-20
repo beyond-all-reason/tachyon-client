@@ -18,7 +18,9 @@
   },
   "author": "Jazcash",
   "license": "mit",
-  "dependencies": {},
+  "dependencies": {
+    "type-fest": "^2.12.2"
+  },
   "devDependencies": {
     "@sinclair/typebox": "^0.20.5",
     "@types/eslint": "^7.2.5",
