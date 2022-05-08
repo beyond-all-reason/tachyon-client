@@ -1,10 +1,12 @@
 /// <reference types="node" />
 import { Static } from "@sinclair/typebox";
+import Ajv, { ValidateFunction } from "ajv";
 import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
-import { clientCommandSchema } from "./model/commands/client-commands";
-import { serverCommandSchema } from "./model/commands/server-commands";
+import { requestResponseMap } from "./model/request-response-map";
+import { requests } from "./model/requests";
+import { responses } from "./model/responses";
 export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
@@ -17,36 +19,38 @@ export declare const defaultTachyonClientOptions: {
     pingIntervalMs: number;
     logMethod: (message?: any, ...optionalParams: any[]) => void;
 };
-export declare type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
-export declare type ServerCommandType<T> = T extends keyof typeof serverCommandSchema ? Static<typeof serverCommandSchema[T]> : void;
-export interface TachyonClient {
-    [key: string]: unknown;
-    ping(): Promise<ServerCommandType<"s.system.pong">>;
-    register(options: ClientCommandType<"c.auth.register">): Promise<ServerCommandType<"s.auth.register">>;
-    getToken(options: ClientCommandType<"c.auth.get_token">): Promise<ServerCommandType<"s.auth.get_token">>;
-    login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
-    verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
-    disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
-    getBattles(options: ClientCommandType<"c.lobby.query">): Promise<ServerCommandType<"s.lobby.query">>;
-}
+export declare type RequestKey = keyof typeof requests;
+export declare type ResponseKey = keyof typeof responses;
+export declare type RequestData = typeof requests[RequestKey];
+export declare type ResponseData = typeof responses[ResponseKey];
+export declare type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
+export declare type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
+export declare type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
+export declare type RequestResponseType<K extends RequestKey> = ResponseType<RequestResponseKey<K>>;
 export declare class TachyonClient {
     config: TachyonClientOptions;
     socket?: tls.TLSSocket;
     onClose: Signal<void>;
     protected pingIntervalId?: NodeJS.Timeout;
-    protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>>;
-    protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>>;
+    protected requestSignals: Map<string, Signal<Record<string, unknown>>>;
+    protected responseSignals: Map<string, Signal<Record<string, unknown>>>;
     protected requestClosedBinding?: SignalBinding;
     protected loggedIn: boolean;
     protected connected: boolean;
+    protected ajv: Ajv;
+    protected responseValidators: Record<string, ValidateFunction>;
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>);
     connect(): Promise<void>;
-    onRequest<T extends keyof typeof clientCommandSchema>(type: T): Signal<ClientCommandType<T>>;
-    onResponse<T extends keyof typeof serverCommandSchema>(type: T): Signal<ServerCommandType<T>>;
+    request<ReqKey extends RequestKey, ReqData extends RequestType<ReqKey>, Response extends RequestResponseType<ReqKey>>(requestKey: ReqKey, data: ReqData, responseKey?: string): Promise<Response>;
+    request<ReqKey extends string, ReqData extends Record<string, unknown>, Response extends Record<string, unknown>>(requestKey: ReqKey, data: ReqData, responseKey?: string): Promise<Response>;
+    onRequest<K extends RequestKey>(requestKey: K): Signal<RequestType<K>>;
+    onRequest<K extends string>(requestKey: K): Signal<Record<string, unknown>>;
+    onResponse<K extends ResponseKey>(responseKey: K): Signal<ResponseType<K>>;
+    onResponse<K extends string>(responseKey: K): Signal<Record<string, unknown>>;
     isLoggedIn(): boolean;
     isConnected(): boolean;
     protected rawRequest(request: Record<string, unknown>): void;
-    protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S): void;
     protected startPingInterval(): void;
     protected stopPingInterval(): void;
+    protected validateResponse(key: string, response: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | null;
 }

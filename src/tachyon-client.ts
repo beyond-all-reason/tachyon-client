@@ -1,12 +1,14 @@
-import { Static } from "@sinclair/typebox";
-import { Signal, SignalBinding } from "jaz-ts-utils";
+import { Static, TObject } from "@sinclair/typebox";
+import Ajv, { ValidateFunction } from "ajv";
+import { Signal, SignalBinding, objectKeys } from "jaz-ts-utils";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
 
-import { clientCommandSchema } from "~/model/commands/client-commands";
-import { serverCommandSchema } from "~/model/commands/server-commands";
 import { NotConnectedError, ServerClosedError } from "~/model/errors";
+import { requestResponseMap } from "~/model/request-response-map";
+import { requests } from "~/model/requests";
+import { responses } from "~/model/responses";
 
 export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
@@ -22,33 +24,28 @@ export const defaultTachyonClientOptions = {
     logMethod: console.log,
 };
 
-export type ClientCommandType<T> = T extends keyof typeof clientCommandSchema ? Static<typeof clientCommandSchema[T]> : void;
-export type ServerCommandType<T> = T extends keyof typeof serverCommandSchema ? Static<typeof serverCommandSchema[T]> : void;
-
-// TODO: reduce the complexity and repeated information with this and the .addClientCommand calls using constraint identify functions
-export interface TachyonClient {
-    [key: string]: unknown;
-    ping(): Promise<ServerCommandType<"s.system.pong">>;
-    register(options: ClientCommandType<"c.auth.register">): Promise<ServerCommandType<"s.auth.register">>;
-    getToken(options: ClientCommandType<"c.auth.get_token">): Promise<ServerCommandType<"s.auth.get_token">>;
-    login(options: ClientCommandType<"c.auth.login">): Promise<ServerCommandType<"s.auth.login">>;
-    verify(options: ClientCommandType<"c.auth.verify">): Promise<ServerCommandType<"s.auth.verify">>;
-    disconnect(options: ClientCommandType<"c.auth.disconnect">): Promise<void>;
-    getBattles(options: ClientCommandType<"c.lobby.query">): Promise<ServerCommandType<"s.lobby.query">>;
-}
+export type RequestKey = keyof typeof requests;
+export type ResponseKey = keyof typeof responses;
+export type RequestData = typeof requests[RequestKey];
+export type ResponseData = typeof responses[ResponseKey];
+export type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
+export type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
+export type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
+export type RequestResponseType<K extends RequestKey> = ResponseType<RequestResponseKey<K>>;
 
 export class TachyonClient {
     public config: TachyonClientOptions;
     public socket?: tls.TLSSocket;
     public onClose = new Signal<void>();
-    //public onCommand: Signal<{ [key: string]: unknown, cmd: string; }> = new Signal();
 
     protected pingIntervalId?: NodeJS.Timeout;
-    protected requestSignals: Map<keyof typeof clientCommandSchema, Signal<unknown>> = new Map();
-    protected responseSignals: Map<keyof typeof serverCommandSchema, Signal<unknown>> = new Map();
+    protected requestSignals: Map<string, Signal<Record<string, unknown>>> = new Map();
+    protected responseSignals: Map<string, Signal<Record<string, unknown>>> = new Map();
     protected requestClosedBinding?: SignalBinding;
     protected loggedIn = false;
     protected connected = false;
+    protected ajv: Ajv;
+    protected responseValidators: Record<string, ValidateFunction> = {};
 
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -56,6 +53,15 @@ export class TachyonClient {
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
+
+        this.ajv = new Ajv();
+        this.ajv.addKeyword('kind');
+        this.ajv.addKeyword('modifier');
+        objectKeys(responses).forEach((key) => {
+            const responseSchema = responses[key];
+            const validator = this.ajv.compile(responseSchema);
+            this.responseValidators[key] = validator;
+        });
     }
 
     public async connect() {
@@ -67,14 +73,6 @@ export class TachyonClient {
 
             this.requestSignals = new Map();
             this.responseSignals = new Map();
-            
-            this.addCommand("disconnect", "c.auth.disconnect");
-            this.addCommand("ping", "c.system.ping", "s.system.pong");
-            this.addCommand("register", "c.auth.register", "s.auth.register");
-            this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
-            this.addCommand("login", "c.auth.login", "s.auth.login");
-            this.addCommand("verify", "c.auth.verify", "s.auth.verify");
-            this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
 
             this.socket = tls.connect(this.config);
 
@@ -148,18 +146,73 @@ export class TachyonClient {
         });
     }
 
-    public onRequest<T extends keyof typeof clientCommandSchema>(type: T) : Signal<ClientCommandType<T>> {
-        if (!this.requestSignals.has(type)) {
-            this.requestSignals.set(type, new Signal());
+    public async request<ReqKey extends RequestKey, ReqData extends RequestType<ReqKey>, Response extends RequestResponseType<ReqKey>>(requestKey: ReqKey, data: ReqData, responseKey?: string) : Promise<Response>;
+    public async request<ReqKey extends string, ReqData extends Record<string, unknown>, Response extends Record<string, unknown>>(requestKey: ReqKey, data: ReqData, responseKey?: string) : Promise<Response>;
+    public async request<ReqKey extends RequestKey | string, ReqData extends (ReqKey extends RequestKey ? RequestType<ReqKey> : Record<string, unknown>), Response extends (ReqKey extends RequestKey ? RequestResponseType<ReqKey> : Record<string, unknown>)>(requestKey: ReqKey, data: ReqData, responseKey?: string) : Promise<Response> {
+        if (!responseKey) {
+            responseKey = requestResponseMap[requestKey as keyof typeof requestResponseMap];
         }
-        return this.requestSignals.get(type) as Signal<ClientCommandType<T>>;
+
+        return new Promise((resolve, reject) => {
+            if (!this.socket?.readable) {
+                reject(new NotConnectedError());
+            }
+
+            if (this.requestClosedBinding) {
+                this.requestClosedBinding.destroy();
+            }
+            this.requestClosedBinding = this.onClose.add(() => {
+                if (requestKey === "c.auth.disconnect") {
+                    resolve({} as Response);
+                } else {
+                    reject(new ServerClosedError());
+                }
+            });
+
+            if (responseKey && responseKey !== "none") {
+                const signalBinding = this.onResponse(responseKey).add((data) => {
+                    signalBinding.destroy();
+
+                    if (responseKey && responseKey in responses) {
+                        this.validateResponse(responseKey, data);
+                    }
+
+                    resolve(data as Response);
+                });
+
+                this.rawRequest({ cmd: requestKey, ...data });
+            } else {
+                this.rawRequest({ cmd: requestKey, ...data });
+
+                resolve({} as Response);
+            }
+        });
     }
 
-    public onResponse<T extends keyof typeof serverCommandSchema>(type: T) : Signal<ServerCommandType<T>> {
-        if (!this.responseSignals.has(type)) {
-            this.responseSignals.set(type, new Signal());
+    // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
+    public onRequest<K extends RequestKey>(requestKey: K) : Signal<RequestType<K>>;
+    public onRequest<K extends string>(requestKey: K) : Signal<Record<string, unknown>>;
+    public onRequest<K extends RequestKey | string>(requestKey: K) : Signal<Record<string, unknown>> {
+        let request = this.requestSignals.get(requestKey);
+        if (!request) {
+            request = new Signal();
+            this.requestSignals.set(requestKey, request);
         }
-        return this.responseSignals.get(type) as Signal<ServerCommandType<T>>;
+        
+        return request;
+    }
+
+    // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
+    public onResponse<K extends ResponseKey>(responseKey: K) : Signal<ResponseType<K>>;
+    public onResponse<K extends string>(responseKey: K) : Signal<Record<string, unknown>>;
+    public onResponse<K extends ResponseKey | string>(responseKey: K) : Signal<Record<string, unknown>> {
+        let response = this.responseSignals.get(responseKey);
+        if (!response) {
+            response = new Signal();
+            this.responseSignals.set(responseKey, response);
+        }
+
+        return response;
     }
 
     public isLoggedIn() {
@@ -182,43 +235,9 @@ export class TachyonClient {
         this.socket?.write(base64 + "\n");
     }
 
-    protected addCommand<C extends keyof typeof clientCommandSchema, S extends keyof typeof serverCommandSchema, Args = Static<typeof clientCommandSchema[C]> extends Record<string, never> ? undefined : Static<typeof clientCommandSchema[C]>>(name: string, clientCmd: C, serverCmd?: S) {
-        TachyonClient.prototype[name] = function(args?: Args) : Promise<ServerCommandType<S> | void> {
-            return new Promise((resolve, reject) => {
-                if (!this.socket?.readable) {
-                    reject(new NotConnectedError());
-                }
-
-                if (this.requestClosedBinding) {
-                    this.requestClosedBinding.destroy();
-                }
-                this.requestClosedBinding = this.onClose.add(() => {
-                    if (clientCmd === "c.auth.disconnect") {
-                        resolve();
-                    } else {
-                        reject(new ServerClosedError());
-                    }
-                });
-
-                if (serverCmd) {
-                    const signalBinding = this.onResponse(serverCmd).add((data) => {
-                        signalBinding.destroy();
-                        resolve(data);
-                    });
-
-                    this.rawRequest({ cmd: clientCmd, ...args });
-                } else {
-                    this.rawRequest({ cmd: clientCmd, ...args });
-
-                    resolve();
-                }
-            });
-        };
-    }
-
     protected startPingInterval() {
         this.pingIntervalId = setInterval(() => {
-            this.ping();
+            this.request("c.system.ping", {});
         }, this.config.pingIntervalMs);
     }
 
@@ -226,5 +245,20 @@ export class TachyonClient {
         if (this.pingIntervalId) {
             clearInterval(this.pingIntervalId);
         }
+    }
+
+    protected validateResponse(key: string, response: Record<string, unknown>) {
+        const validator = this.responseValidators[key];
+        if (validator) {
+            const isValid = validator(response);
+            if (validator.errors) {
+                console.warn(`Server response did not match expected schema, this should be updated in tachyon-client:`);
+                for (const error of validator.errors) {
+                    console.warn(error);
+                }
+                return validator.errors;
+            }
+        }
+        return null;
     }
 }

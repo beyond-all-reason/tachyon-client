@@ -10,29 +10,33 @@ module.exports = {
     ],
     plugins: [
         "@typescript-eslint",
-        "simple-import-sort",
+        "unused-imports"
     ],
     parserOptions: {
         ecmaVersion: 2020
     },
     ignorePatterns: ["working-files/", "node_modules/", "dist/"],
     rules: {
-        "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
+        "no-console": "off",
         "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
-        "key-spacing": ["error", {
-            "beforeColon": false,
-            "afterColon": true
-        }],
-        
-        "simple-import-sort/imports": "warn",
-        "simple-import-sort/exports": "warn",
-        
-        "@typescript-eslint/semi": ["error", "always"],
-        "@typescript-eslint/quotes": ["error", "double"],
-        "@typescript-eslint/indent": ["error", 4],
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-var-requires": "off",
+        "indent": "off",
+        "quotes": "off",
+        "semi": "off",
+        "space-before-function-paren": ["error", { "anonymous": "never", "named": "never", "asyncArrow": "always" }],
+        "space-before-blocks": ["error", "always"],
+        "keyword-spacing": ["error"],
+        "no-trailing-spaces": "error",
+        "no-multiple-empty-lines": "error",
+        "padded-blocks": ["error", "never"],
+
+        "@typescript-eslint/quotes": ["error"],
+        "@typescript-eslint/semi": ["error"],
+        "@typescript-eslint/indent": ["error"],
         "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-namespace": "off"
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
+        "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
     }
 };

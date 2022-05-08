@@ -4,6 +4,7 @@
         "declaration": true,
         "target": "es2019",
         "strict": true,
+        "noUncheckedIndexedAccess": true,
         "sourceMap": true,
         "module": "CommonJS",
         "moduleResolution": "node",

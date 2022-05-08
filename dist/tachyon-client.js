@@ -18,12 +18,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TachyonClient = exports.defaultTachyonClientOptions = void 0;
+const ajv_1 = __importDefault(require("ajv"));
 const jaz_ts_utils_1 = require("jaz-ts-utils");
 const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
 const errors_1 = require("./model/errors");
+const request_response_map_1 = require("./model/request-response-map");
+const responses_1 = require("./model/responses");
 exports.defaultTachyonClientOptions = {
     verbose: true,
     pingIntervalMs: 30000,
@@ -36,10 +42,19 @@ class TachyonClient {
         this.responseSignals = new Map();
         this.loggedIn = false;
         this.connected = false;
+        this.responseValidators = {};
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
+        this.ajv = new ajv_1.default();
+        this.ajv.addKeyword('kind');
+        this.ajv.addKeyword('modifier');
+        (0, jaz_ts_utils_1.objectKeys)(responses_1.responses).forEach((key) => {
+            const responseSchema = responses_1.responses[key];
+            const validator = this.ajv.compile(responseSchema);
+            this.responseValidators[key] = validator;
+        });
     }
     async connect() {
         return new Promise((resolve, reject) => {
@@ -49,13 +64,6 @@ class TachyonClient {
             }
             this.requestSignals = new Map();
             this.responseSignals = new Map();
-            this.addCommand("disconnect", "c.auth.disconnect");
-            this.addCommand("ping", "c.system.ping", "s.system.pong");
-            this.addCommand("register", "c.auth.register", "s.auth.register");
-            this.addCommand("getToken", "c.auth.get_token", "s.auth.get_token");
-            this.addCommand("login", "c.auth.login", "s.auth.login");
-            this.addCommand("verify", "c.auth.verify", "s.auth.verify");
-            this.addCommand("getBattles", "c.lobby.query", "s.lobby.query");
             this.socket = tls.connect(this.config);
             this.socket.on("data", (dataBuffer) => {
                 const data = dataBuffer.toString("utf8");
@@ -117,17 +125,57 @@ class TachyonClient {
             });
         });
     }
-    onRequest(type) {
-        if (!this.requestSignals.has(type)) {
-            this.requestSignals.set(type, new jaz_ts_utils_1.Signal());
+    async request(requestKey, data, responseKey) {
+        if (!responseKey) {
+            responseKey = request_response_map_1.requestResponseMap[requestKey];
         }
-        return this.requestSignals.get(type);
+        return new Promise((resolve, reject) => {
+            var _a;
+            if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
+                reject(new errors_1.NotConnectedError());
+            }
+            if (this.requestClosedBinding) {
+                this.requestClosedBinding.destroy();
+            }
+            this.requestClosedBinding = this.onClose.add(() => {
+                if (requestKey === "c.auth.disconnect") {
+                    resolve({});
+                }
+                else {
+                    reject(new errors_1.ServerClosedError());
+                }
+            });
+            if (responseKey && responseKey !== "none") {
+                const signalBinding = this.onResponse(responseKey).add((data) => {
+                    signalBinding.destroy();
+                    if (responseKey && responseKey in responses_1.responses) {
+                        this.validateResponse(responseKey, data);
+                    }
+                    resolve(data);
+                });
+                this.rawRequest({ cmd: requestKey, ...data });
+            }
+            else {
+                this.rawRequest({ cmd: requestKey, ...data });
+                resolve({});
+            }
+        });
     }
-    onResponse(type) {
-        if (!this.responseSignals.has(type)) {
-            this.responseSignals.set(type, new jaz_ts_utils_1.Signal());
+    onRequest(requestKey) {
+        let request = this.requestSignals.get(requestKey);
+        if (!request) {
+            request = new jaz_ts_utils_1.Signal();
+            this.requestSignals.set(requestKey, request);
         }
-        return this.responseSignals.get(type);
+        return request;
+    }
+    onResponse(responseKey) {
+        let response = this.responseSignals.get(responseKey);
+        if (!response) {
+            response = new jaz_ts_utils_1.Signal();
+            this.responseSignals.set(responseKey, response);
+        }
+        return response;
     }
     isLoggedIn() {
         return this.loggedIn;
@@ -145,47 +193,29 @@ class TachyonClient {
         }
         (_a = this.socket) === null || _a === void 0 ? void 0 : _a.write(base64 + "\n");
     }
-    addCommand(name, clientCmd, serverCmd) {
-        TachyonClient.prototype[name] = function (args) {
-            return new Promise((resolve, reject) => {
-                var _a;
-                if (!((_a = this.socket) === null || _a === void 0 ? void 0 : _a.readable)) {
-                    reject(new errors_1.NotConnectedError());
-                }
-                if (this.requestClosedBinding) {
-                    this.requestClosedBinding.destroy();
-                }
-                this.requestClosedBinding = this.onClose.add(() => {
-                    if (clientCmd === "c.auth.disconnect") {
-                        resolve();
-                    }
-                    else {
-                        reject(new errors_1.ServerClosedError());
-                    }
-                });
-                if (serverCmd) {
-                    const signalBinding = this.onResponse(serverCmd).add((data) => {
-                        signalBinding.destroy();
-                        resolve(data);
-                    });
-                    this.rawRequest({ cmd: clientCmd, ...args });
-                }
-                else {
-                    this.rawRequest({ cmd: clientCmd, ...args });
-                    resolve();
-                }
-            });
-        };
-    }
     startPingInterval() {
         this.pingIntervalId = setInterval(() => {
-            this.ping();
+            this.request("c.system.ping", {});
         }, this.config.pingIntervalMs);
     }
     stopPingInterval() {
         if (this.pingIntervalId) {
             clearInterval(this.pingIntervalId);
         }
+    }
+    validateResponse(key, response) {
+        const validator = this.responseValidators[key];
+        if (validator) {
+            const isValid = validator(response);
+            if (validator.errors) {
+                console.warn(`Server response did not match expected schema, this should be updated in tachyon-client:`);
+                for (const error of validator.errors) {
+                    console.warn(error);
+                }
+                return validator.errors;
+            }
+        }
+        return null;
     }
 }
 exports.TachyonClient = TachyonClient;
