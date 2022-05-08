@@ -41,8 +41,7 @@ export declare class TachyonClient {
     protected responseValidators: Record<string, ValidateFunction>;
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>);
     connect(): Promise<void>;
-    request<ReqKey extends RequestKey, ReqData extends RequestType<ReqKey>, Response extends RequestResponseType<ReqKey>>(requestKey: ReqKey, data: ReqData, responseKey?: string): Promise<Response>;
-    request<ReqKey extends string, ReqData extends Record<string, unknown>, Response extends Record<string, unknown>>(requestKey: ReqKey, data: ReqData, responseKey?: string): Promise<Response>;
+    request<K extends RequestKey, Data extends RequestType<K>, Response extends RequestResponseType<K>>(requestKey: K, data: Data, responseKey?: string): Promise<Response>;
     onRequest<K extends RequestKey>(requestKey: K): Signal<RequestType<K>>;
     onRequest<K extends string>(requestKey: K): Signal<Record<string, unknown>>;
     onResponse<K extends ResponseKey>(responseKey: K): Signal<ResponseType<K>>;
