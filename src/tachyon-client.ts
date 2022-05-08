@@ -144,11 +144,7 @@ export class TachyonClient {
         });
     }
 
-    // TODO: figure out how to type overloads to allow unknown command requests without ruining the typing of known command requests
-    //public async request<K extends RequestKey, Data extends RequestType<K>, Response extends RequestResponseType<K>>(requestKey: K, data: Data, responseKey?: string) : Promise<Response>;
-    //public async request<K extends string, Data extends Record<string, unknown>, Response extends Record<string, unknown>>(requestKey: K, data: Data, responseKey?: string) : Promise<Response>;
-    //public async request<K extends RequestKey | string, Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>), Response extends (K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<Response> {
-    public async request<K extends RequestKey, Data extends RequestType<K>, Response extends RequestResponseType<K>>(requestKey: K, data: Data, responseKey?: string) : Promise<Response> {
+    public async request<K extends RequestKey | (string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>), Response extends (K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<Response> {
         if (!responseKey) {
             responseKey = requestResponseMap[requestKey as keyof typeof requestResponseMap];
         }
