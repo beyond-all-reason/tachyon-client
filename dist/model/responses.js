@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responses = void 0;
+exports.responses = exports.botSchema = exports.userSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
-const userSchema = typebox_1.Type.Object({
+exports.userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
     springid: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.String()]),
     name: typebox_1.Type.String(),
@@ -11,7 +11,7 @@ const userSchema = typebox_1.Type.Object({
     friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
     friends: typebox_1.Type.Array(typebox_1.Type.Number())
 });
-const botSchema = typebox_1.Type.Object({
+exports.botSchema = typebox_1.Type.Object({
     ai_dll: typebox_1.Type.String(),
     ally_team_number: typebox_1.Type.Number(),
     handicap: typebox_1.Type.Number(),
@@ -40,16 +40,16 @@ exports.responses = {
         result: typebox_1.Type.String(),
         agreement: typebox_1.Type.Optional(typebox_1.Type.String()),
         reason: typebox_1.Type.Optional(typebox_1.Type.String()),
-        user: typebox_1.Type.Optional(userSchema),
+        user: typebox_1.Type.Optional(exports.userSchema),
     }),
     "s.auth.verify": typebox_1.Type.Object({
         result: typebox_1.Type.String(),
-        user: typebox_1.Type.Optional(userSchema),
+        user: typebox_1.Type.Optional(exports.userSchema),
         reason: typebox_1.Type.Optional(typebox_1.Type.String())
     }),
     "s.lobby.query": typebox_1.Type.Object({
         lobbies: typebox_1.Type.Array(typebox_1.Type.Object({
-            bots: typebox_1.Type.Record(typebox_1.Type.String(), botSchema),
+            bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),
             disabled_units: typebox_1.Type.Array(typebox_1.Type.String()),
             engine_name: typebox_1.Type.String(),
             engine_version: typebox_1.Type.String(),

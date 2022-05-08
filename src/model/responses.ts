@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 
-const userSchema = Type.Object({
+export const userSchema = Type.Object({
     id: Type.Number(),
     springid: Type.Union([Type.Number(), Type.String()]), // TODO: Server will fix this
     name: Type.String(),
@@ -10,7 +10,7 @@ const userSchema = Type.Object({
     friends: Type.Array(Type.Number())
 });
 
-const botSchema = Type.Object({
+export const botSchema = Type.Object({
     ai_dll: Type.String(),
     ally_team_number: Type.Number(),
     handicap: Type.Number(),
@@ -67,4 +67,4 @@ export const responses = {
             type: Type.String(),
         }))
     })
-};
+} as const;

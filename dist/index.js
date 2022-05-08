@@ -11,5 +11,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./model/errors"), exports);
+__exportStar(require("./model/requests"), exports);
+__exportStar(require("./model/responses"), exports);
 __exportStar(require("./tachyon-client"), exports);
 //# sourceMappingURL=index.js.map

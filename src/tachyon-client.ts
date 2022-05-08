@@ -26,8 +26,6 @@ export const defaultTachyonClientOptions = {
 
 export type RequestKey = keyof typeof requests;
 export type ResponseKey = keyof typeof responses;
-export type RequestData = typeof requests[RequestKey];
-export type ResponseData = typeof responses[ResponseKey];
 export type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
 export type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
 export type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;

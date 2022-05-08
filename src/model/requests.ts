@@ -28,4 +28,4 @@ export const requests = {
             in_progress: Type.Optional(Type.Boolean()),
         }),
     })
-};
+} as const;
