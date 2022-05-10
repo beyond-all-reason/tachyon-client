@@ -41,7 +41,7 @@ export declare class TachyonClient {
     connect(): Promise<void>;
     request<K extends RequestKey | (string & {
         key?: any;
-    }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>), Response extends (K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string): Promise<Response>;
+    }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string): Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>>;
     onRequest<K extends RequestKey>(requestKey: K): Signal<RequestType<K>>;
     onRequest<K extends string>(requestKey: K): Signal<Record<string, unknown>>;
     onResponse<K extends ResponseKey>(responseKey: K): Signal<ResponseType<K>>;

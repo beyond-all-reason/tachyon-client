@@ -144,7 +144,7 @@ export class TachyonClient {
         });
     }
 
-    public async request<K extends RequestKey | (string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>), Response extends (K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<Response> {
+    public async request<K extends RequestKey | (string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>> {
         if (!responseKey) {
             responseKey = requestResponseMap[requestKey as keyof typeof requestResponseMap];
         }
@@ -159,7 +159,7 @@ export class TachyonClient {
             }
             this.requestClosedBinding = this.onClose.add(() => {
                 if (requestKey === "c.auth.disconnect") {
-                    resolve({} as Response);
+                    resolve({} as any);
                 } else {
                     reject(new ServerClosedError());
                 }
@@ -173,14 +173,14 @@ export class TachyonClient {
                         this.validateResponse(responseKey, data);
                     }
 
-                    resolve(data as Response);
+                    resolve(data as any);
                 });
 
                 this.rawRequest({ cmd: requestKey, ...data });
             } else {
                 this.rawRequest({ cmd: requestKey, ...data });
 
-                resolve({} as Response);
+                resolve({} as any);
             }
         });
     }
