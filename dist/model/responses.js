@@ -20,7 +20,7 @@ exports.clientSchema = typebox_1.Type.Object({
     lobby_id: typebox_1.Type.Number(),
     ready: typebox_1.Type.Boolean(),
     role: typebox_1.Type.String(),
-    team_colour: typebox_1.Type.String(),
+    team_colour: typebox_1.Type.Number(),
     team_number: typebox_1.Type.Number(),
     userid: typebox_1.Type.Number()
 });

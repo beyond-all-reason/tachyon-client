@@ -22,7 +22,7 @@ export declare const clientSchema: import("@sinclair/typebox").TObject<{
     lobby_id: import("@sinclair/typebox").TNumber;
     ready: import("@sinclair/typebox").TBoolean;
     role: import("@sinclair/typebox").TString;
-    team_colour: import("@sinclair/typebox").TString;
+    team_colour: import("@sinclair/typebox").TNumber;
     team_number: import("@sinclair/typebox").TNumber;
     userid: import("@sinclair/typebox").TNumber;
 }>;
@@ -122,7 +122,7 @@ export declare const responses: {
             lobby_id: import("@sinclair/typebox").TNumber;
             ready: import("@sinclair/typebox").TBoolean;
             role: import("@sinclair/typebox").TString;
-            team_colour: import("@sinclair/typebox").TString;
+            team_colour: import("@sinclair/typebox").TNumber;
             team_number: import("@sinclair/typebox").TNumber;
             userid: import("@sinclair/typebox").TNumber;
         }>>;

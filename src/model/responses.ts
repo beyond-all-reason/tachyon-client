@@ -20,7 +20,7 @@ export const clientSchema = Type.Object({
     lobby_id: Type.Number(),
     ready: Type.Boolean(),
     role: Type.String(),
-    team_colour: Type.String(),
+    team_colour: Type.Number(),
     team_number: Type.Number(),
     userid: Type.Number()
 });
