@@ -1,15 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responses = exports.botSchema = exports.userSchema = void 0;
+exports.responses = exports.botSchema = exports.clientSchema = exports.myUserSchema = exports.userSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
 exports.userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
     springid: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.String()]),
     name: typebox_1.Type.String(),
     bot: typebox_1.Type.Boolean(),
-    clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
-    friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
-    friends: typebox_1.Type.Array(typebox_1.Type.Number())
+    clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()])
+});
+exports.myUserSchema = typebox_1.Type.Intersect([exports.userSchema, typebox_1.Type.Object({
+        friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
+        friends: typebox_1.Type.Array(typebox_1.Type.Number())
+    })]);
+exports.clientSchema = typebox_1.Type.Object({
+    ally_team_number: typebox_1.Type.Number(),
+    away: typebox_1.Type.Boolean(),
+    in_game: typebox_1.Type.Boolean(),
+    lobby_id: typebox_1.Type.Number(),
+    ready: typebox_1.Type.Boolean(),
+    role: typebox_1.Type.String(),
+    team_colour: typebox_1.Type.String(),
+    team_number: typebox_1.Type.Number(),
+    userid: typebox_1.Type.Number()
 });
 exports.botSchema = typebox_1.Type.Object({
     ai_dll: typebox_1.Type.String(),
@@ -26,6 +39,7 @@ exports.botSchema = typebox_1.Type.Object({
     team_number: typebox_1.Type.Number(),
 });
 exports.responses = {
+    "s.auth.disconnect": typebox_1.Type.Object({}),
     "s.system.pong": typebox_1.Type.Object({}),
     "s.auth.register": typebox_1.Type.Object({
         result: typebox_1.Type.String(),
@@ -40,11 +54,11 @@ exports.responses = {
         result: typebox_1.Type.String(),
         agreement: typebox_1.Type.Optional(typebox_1.Type.String()),
         reason: typebox_1.Type.Optional(typebox_1.Type.String()),
-        user: typebox_1.Type.Optional(exports.userSchema),
+        user: typebox_1.Type.Optional(exports.myUserSchema),
     }),
     "s.auth.verify": typebox_1.Type.Object({
         result: typebox_1.Type.String(),
-        user: typebox_1.Type.Optional(exports.userSchema),
+        user: typebox_1.Type.Optional(exports.myUserSchema),
         reason: typebox_1.Type.Optional(typebox_1.Type.String())
     }),
     "s.lobby.query": typebox_1.Type.Object({
@@ -66,6 +80,10 @@ exports.responses = {
             tags: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.String()),
             type: typebox_1.Type.String(),
         }))
+    }),
+    "s.user.user_and_client_list": typebox_1.Type.Object({
+        clients: typebox_1.Type.Array(exports.clientSchema),
+        users: typebox_1.Type.Array(exports.userSchema),
     })
 };
 //# sourceMappingURL=responses.js.map

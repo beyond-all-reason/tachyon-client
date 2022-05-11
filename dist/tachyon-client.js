@@ -65,21 +65,34 @@ class TachyonClient {
             this.requestSignals = new Map();
             this.responseSignals = new Map();
             this.socket = tls.connect(this.config);
+            let chunk = "";
             this.socket.on("data", (dataBuffer) => {
-                const data = dataBuffer.toString("utf8");
-                const gzipped = Buffer.from(data, "base64");
-                const response = gzip.unzipSync(gzipped);
-                const jsonString = response.toString("utf8");
-                const command = JSON.parse(jsonString);
-                if (this.config.verbose) {
-                    this.config.logMethod("RESPONSE:", command);
+                try {
+                    const data = dataBuffer.toString("utf8");
+                    chunk += data;
+                    const isChunkComplete = data.endsWith("\n");
+                    if (!isChunkComplete) {
+                        return;
+                    }
+                    const gzipped = Buffer.from(chunk, "base64");
+                    chunk = "";
+                    const response = gzip.unzipSync(gzipped);
+                    const jsonString = response.toString("utf8");
+                    const command = JSON.parse(jsonString);
+                    if (this.config.verbose) {
+                        this.config.logMethod("RESPONSE:", command);
+                    }
+                    const responseSignal = this.responseSignals.get(command.cmd);
+                    if (responseSignal) {
+                        responseSignal.dispatch(command);
+                    }
+                    if (command.error || command.result === "error") {
+                        reject(command);
+                    }
                 }
-                const responseSignal = this.responseSignals.get(command.cmd);
-                if (responseSignal) {
-                    responseSignal.dispatch(command);
-                }
-                if (command.error || command.result === "error") {
-                    reject(command);
+                catch (err) {
+                    console.error("Error parsing tachyon response");
+                    throw err;
                 }
             });
             this.socket.on("secureConnect", () => {

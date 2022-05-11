@@ -26,4 +26,8 @@ export declare const requests: {
             in_progress: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TBoolean>;
         }>;
     }>;
+    readonly "c.user.list_users_from_ids": import("@sinclair/typebox").TObject<{
+        id_list: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+        include_clients: import("@sinclair/typebox").TLiteral<true>;
+    }>;
 };

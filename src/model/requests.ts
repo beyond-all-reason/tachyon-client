@@ -27,5 +27,9 @@ export const requests = {
             locked: Type.Optional(Type.Boolean()),
             in_progress: Type.Optional(Type.Boolean()),
         }),
+    }),
+    "c.user.list_users_from_ids": Type.Object({
+        id_list: Type.Array(Type.Number()),
+        include_clients: Type.Literal(true), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
     })
 } as const;

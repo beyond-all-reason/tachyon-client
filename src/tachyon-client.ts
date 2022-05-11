@@ -28,7 +28,7 @@ export type RequestKey = keyof typeof requests;
 export type ResponseKey = keyof typeof responses;
 export type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
 export type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
-export type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
+export type RequestResponseKey<K extends RequestKey> = typeof requestResponseMap[K];
 export type RequestResponseType<K extends RequestKey> = ResponseType<RequestResponseKey<K>>;
 
 export class TachyonClient {
@@ -74,23 +74,36 @@ export class TachyonClient {
 
             this.socket = tls.connect(this.config);
 
+            let chunk = "";
+
             this.socket.on("data", (dataBuffer: Buffer) => {
-                const data = dataBuffer.toString("utf8");
-                const gzipped = Buffer.from(data, "base64");
-                const response = gzip.unzipSync(gzipped);
-                const jsonString = response.toString("utf8");
-                const command = JSON.parse(jsonString);
-                if (this.config.verbose) {
-                    this.config.logMethod("RESPONSE:", command);
-                }
-
-                const responseSignal = this.responseSignals.get(command.cmd);
-                if (responseSignal) {
-                    responseSignal.dispatch(command);
-                }
-
-                if (command.error || command.result === "error") {
-                    reject(command);
+                try {
+                    const data = dataBuffer.toString("utf8");
+                    chunk += data;
+                    const isChunkComplete = data.endsWith("\n");
+                    if (!isChunkComplete) {
+                        return;
+                    }
+                    const gzipped = Buffer.from(chunk, "base64");
+                    chunk = "";
+                    const response = gzip.unzipSync(gzipped);
+                    const jsonString = response.toString("utf8");
+                    const command = JSON.parse(jsonString);
+                    if (this.config.verbose) {
+                        this.config.logMethod("RESPONSE:", command);
+                    }
+    
+                    const responseSignal = this.responseSignals.get(command.cmd);
+                    if (responseSignal) {
+                        responseSignal.dispatch(command);
+                    }
+    
+                    if (command.error || command.result === "error") {
+                        reject(command);
+                    }
+                } catch(err) {
+                    console.error("Error parsing tachyon response");
+                    throw err;
                 }
             });
 

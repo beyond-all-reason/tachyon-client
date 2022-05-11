@@ -29,6 +29,10 @@ exports.requests = {
             locked: typebox_1.Type.Optional(typebox_1.Type.Boolean()),
             in_progress: typebox_1.Type.Optional(typebox_1.Type.Boolean()),
         }),
+    }),
+    "c.user.list_users_from_ids": typebox_1.Type.Object({
+        id_list: typebox_1.Type.Array(typebox_1.Type.Number()),
+        include_clients: typebox_1.Type.Literal(true), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
     })
 };
 //# sourceMappingURL=requests.js.map
