@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responses = exports.botSchema = exports.clientSchema = exports.myUserSchema = exports.userSchema = void 0;
+exports.responses = exports.lobbySchema = exports.botSchema = exports.clientSchema = exports.myUserSchema = exports.userSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
 exports.userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
@@ -40,6 +40,26 @@ exports.botSchema = typebox_1.Type.Object({
     team_colour: typebox_1.Type.String(),
     team_number: typebox_1.Type.Number(),
 }, { additionalProperties: false });
+exports.lobbySchema = typebox_1.Type.Object({
+    bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),
+    disabled_units: typebox_1.Type.Array(typebox_1.Type.String()),
+    engine_name: typebox_1.Type.String(),
+    engine_version: typebox_1.Type.String(),
+    founder_id: typebox_1.Type.Number(),
+    id: typebox_1.Type.Number(),
+    in_progress: typebox_1.Type.Boolean(),
+    ip: typebox_1.Type.String(),
+    locked: typebox_1.Type.Boolean(),
+    map_hash: typebox_1.Type.String(),
+    map_name: typebox_1.Type.String(),
+    max_players: typebox_1.Type.Number(),
+    name: typebox_1.Type.String(),
+    password: typebox_1.Type.Union([typebox_1.Type.String(), typebox_1.Type.Null()]),
+    players: typebox_1.Type.Array(typebox_1.Type.Number()),
+    started_at: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
+    tags: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.String()),
+    type: typebox_1.Type.String(),
+}, { additionalProperties: false });
 exports.responses = {
     "s.auth.disconnect": typebox_1.Type.Object({}),
     "s.system.pong": typebox_1.Type.Object({}),
@@ -65,24 +85,7 @@ exports.responses = {
     }),
     "s.lobby.query": typebox_1.Type.Object({
         result: typebox_1.Type.String(),
-        lobbies: typebox_1.Type.Array(typebox_1.Type.Object({
-            bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),
-            disabled_units: typebox_1.Type.Array(typebox_1.Type.String()),
-            engine_name: typebox_1.Type.String(),
-            engine_version: typebox_1.Type.String(),
-            founder_id: typebox_1.Type.Number(),
-            id: typebox_1.Type.Number(),
-            ip: typebox_1.Type.String(),
-            locked: typebox_1.Type.Boolean(),
-            map_hash: typebox_1.Type.String(),
-            map_name: typebox_1.Type.String(),
-            max_players: typebox_1.Type.Number(),
-            name: typebox_1.Type.String(),
-            password: typebox_1.Type.Union([typebox_1.Type.String(), typebox_1.Type.Null()]),
-            players: typebox_1.Type.Array(typebox_1.Type.Number()),
-            tags: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.String()),
-            type: typebox_1.Type.String(),
-        }))
+        lobbies: typebox_1.Type.Array(exports.lobbySchema)
     }),
     "s.user.user_and_client_list": typebox_1.Type.Object({
         clients: typebox_1.Type.Array(exports.clientSchema),

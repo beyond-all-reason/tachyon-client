@@ -42,6 +42,27 @@ export const botSchema = Type.Object({
     team_number: Type.Number(),
 }, { additionalProperties: false });
 
+export const lobbySchema = Type.Object({
+    bots: Type.Record(Type.String(), botSchema),
+    disabled_units: Type.Array(Type.String()),
+    engine_name: Type.String(),
+    engine_version: Type.String(),
+    founder_id: Type.Number(),
+    id: Type.Number(),
+    in_progress: Type.Boolean(),
+    ip: Type.String(),
+    locked: Type.Boolean(),
+    map_hash: Type.String(),
+    map_name: Type.String(),
+    max_players: Type.Number(),
+    name: Type.String(),
+    password: Type.Union([Type.String(), Type.Null()]),
+    players: Type.Array(Type.Number()),
+    started_at: Type.Union([Type.Number(), Type.Null()]),
+    tags: Type.Record(Type.String(), Type.String()),
+    type: Type.String(),
+}, { additionalProperties: false });
+
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
     "s.system.pong": Type.Object({}),
@@ -67,24 +88,7 @@ export const responses = {
     }),
     "s.lobby.query": Type.Object({
         result: Type.String(),
-        lobbies: Type.Array(Type.Object({
-            bots: Type.Record(Type.String(), botSchema),
-            disabled_units: Type.Array(Type.String()),
-            engine_name: Type.String(),
-            engine_version: Type.String(),
-            founder_id: Type.Number(),
-            id: Type.Number(),
-            ip: Type.String(),
-            locked: Type.Boolean(),
-            map_hash: Type.String(),
-            map_name: Type.String(),
-            max_players: Type.Number(),
-            name: Type.String(),
-            password: Type.Union([Type.String(), Type.Null()]),
-            players: Type.Array(Type.Number()),
-            tags: Type.Record(Type.String(), Type.String()),
-            type: Type.String(),
-        }))
+        lobbies: Type.Array(lobbySchema)
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(clientSchema),
