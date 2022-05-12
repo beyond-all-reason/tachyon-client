@@ -19,8 +19,8 @@ exports.clientSchema = typebox_1.Type.Object({
     in_game: typebox_1.Type.Boolean(),
     lobby_id: typebox_1.Type.Number(),
     ready: typebox_1.Type.Boolean(),
-    role: typebox_1.Type.String(),
-    team_colour: typebox_1.Type.Number(),
+    player: typebox_1.Type.Boolean(),
+    team_colour: typebox_1.Type.String(),
     team_number: typebox_1.Type.Number(),
     userid: typebox_1.Type.Number()
 });
