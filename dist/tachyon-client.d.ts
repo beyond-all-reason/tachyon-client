@@ -36,7 +36,12 @@ export declare class TachyonClient {
     protected loggedIn: boolean;
     protected connected: boolean;
     protected ajv: Ajv;
-    protected responseValidators: Record<string, ValidateFunction>;
+    protected requestValidators: {
+        [key in RequestKey]?: ValidateFunction;
+    };
+    protected responseValidators: {
+        [key in ResponseKey]?: ValidateFunction;
+    };
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>);
     connect(): Promise<void>;
     request<K extends RequestKey | (string & {
@@ -51,5 +56,6 @@ export declare class TachyonClient {
     protected rawRequest(request: Record<string, unknown>): void;
     protected startPingInterval(): void;
     protected stopPingInterval(): void;
-    protected validateResponse(key: string, response: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | null;
+    protected validateRequest(key: RequestKey, request: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
+    protected validateResponse(key: ResponseKey, response: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
 }

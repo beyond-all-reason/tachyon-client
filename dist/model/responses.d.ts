@@ -4,6 +4,8 @@ export declare const userSchema: import("@sinclair/typebox").TObject<{
     name: import("@sinclair/typebox").TString;
     bot: import("@sinclair/typebox").TBoolean;
     clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+    country: import("@sinclair/typebox").TString;
+    icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
 }>;
 export declare const myUserSchema: import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
     id: import("@sinclair/typebox").TNumber;
@@ -11,6 +13,8 @@ export declare const myUserSchema: import("@sinclair/typebox").TIntersect<[impor
     name: import("@sinclair/typebox").TString;
     bot: import("@sinclair/typebox").TBoolean;
     clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+    country: import("@sinclair/typebox").TString;
+    icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
 }>, import("@sinclair/typebox").TObject<{
     friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
     friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
@@ -62,6 +66,8 @@ export declare const responses: {
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            country: import("@sinclair/typebox").TString;
+            icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
         }>, import("@sinclair/typebox").TObject<{
             friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
             friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
@@ -75,6 +81,8 @@ export declare const responses: {
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            country: import("@sinclair/typebox").TString;
+            icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
         }>, import("@sinclair/typebox").TObject<{
             friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
             friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
@@ -82,6 +90,7 @@ export declare const responses: {
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     }>;
     readonly "s.lobby.query": import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TString;
         lobbies: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
             bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TObject<{
                 ai_dll: import("@sinclair/typebox").TString;
@@ -132,6 +141,8 @@ export declare const responses: {
             name: import("@sinclair/typebox").TString;
             bot: import("@sinclair/typebox").TBoolean;
             clan_id: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            country: import("@sinclair/typebox").TString;
+            icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
         }>>;
     }>;
 };

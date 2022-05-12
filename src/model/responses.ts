@@ -5,13 +5,15 @@ export const userSchema = Type.Object({
     springid: Type.Union([Type.Number(), Type.String()]), // TODO: Server will fix this
     name: Type.String(),
     bot: Type.Boolean(),
-    clan_id: Type.Union([Type.Number(), Type.Null()])
-});
+    clan_id: Type.Union([Type.Number(), Type.Null()]),
+    country: Type.String(),
+    icons: Type.Record(Type.String(), Type.Any())
+}, { additionalProperties: false });
 
 export const myUserSchema = Type.Intersect([userSchema, Type.Object({
     friend_requests: Type.Array(Type.Number()),
     friends: Type.Array(Type.Number())
-})])
+}, { additionalProperties: false })])
 
 export const clientSchema = Type.Object({
     ally_team_number: Type.Number(),
@@ -23,7 +25,7 @@ export const clientSchema = Type.Object({
     team_colour: Type.String(),
     team_number: Type.Number(),
     userid: Type.Number()
-});
+}, { additionalProperties: false });
 
 export const botSchema = Type.Object({
     ai_dll: Type.String(),
@@ -38,7 +40,7 @@ export const botSchema = Type.Object({
     sync: Type.Number(),
     team_colour: Type.String(),
     team_number: Type.Number(),
-});
+}, { additionalProperties: false });
 
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
@@ -64,6 +66,7 @@ export const responses = {
         reason: Type.Optional(Type.String())
     }),
     "s.lobby.query": Type.Object({
+        result: Type.String(),
         lobbies: Type.Array(Type.Object({
             bots: Type.Record(Type.String(), botSchema),
             disabled_units: Type.Array(Type.String()),

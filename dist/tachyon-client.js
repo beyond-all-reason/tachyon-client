@@ -29,6 +29,7 @@ const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
 const errors_1 = require("./model/errors");
 const request_response_map_1 = require("./model/request-response-map");
+const requests_1 = require("./model/requests");
 const responses_1 = require("./model/responses");
 exports.defaultTachyonClientOptions = {
     verbose: true,
@@ -42,6 +43,7 @@ class TachyonClient {
         this.responseSignals = new Map();
         this.loggedIn = false;
         this.connected = false;
+        this.requestValidators = {};
         this.responseValidators = {};
         this.config = Object.assign({}, exports.defaultTachyonClientOptions, options);
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
@@ -50,8 +52,15 @@ class TachyonClient {
         this.ajv = new ajv_1.default();
         this.ajv.addKeyword('kind');
         this.ajv.addKeyword('modifier');
+        (0, jaz_ts_utils_1.objectKeys)(requests_1.requests).forEach((key) => {
+            const requestSchema = requests_1.requests[key];
+            requestSchema.additionalProperties = false;
+            const validator = this.ajv.compile(requestSchema);
+            this.requestValidators[key] = validator;
+        });
         (0, jaz_ts_utils_1.objectKeys)(responses_1.responses).forEach((key) => {
             const responseSchema = responses_1.responses[key];
+            responseSchema.additionalProperties = false;
             const validator = this.ajv.compile(responseSchema);
             this.responseValidators[key] = validator;
         });
@@ -158,11 +167,13 @@ class TachyonClient {
                     reject(new errors_1.ServerClosedError());
                 }
             });
+            this.validateRequest(requestKey, data);
             if (responseKey && responseKey !== "none") {
                 const signalBinding = this.onResponse(responseKey).add((data) => {
                     signalBinding.destroy();
                     if (responseKey && responseKey in responses_1.responses) {
-                        this.validateResponse(responseKey, data);
+                        const { cmd, ...response } = data;
+                        this.validateResponse(responseKey, response);
                     }
                     resolve(data);
                 });
@@ -216,19 +227,33 @@ class TachyonClient {
             clearInterval(this.pingIntervalId);
         }
     }
-    validateResponse(key, response) {
-        const validator = this.responseValidators[key];
+    validateRequest(key, request) {
+        const validator = this.requestValidators[key];
         if (validator) {
-            const isValid = validator(response);
+            const isValid = validator(request);
             if (validator.errors) {
-                console.warn(`Server response did not match expected schema, this should be updated in tachyon-client:`);
+                console.warn(`Client request for ${key} did not match expected schema, this should be updated in tachyon-client:`);
                 for (const error of validator.errors) {
                     console.warn(error);
                 }
                 return validator.errors;
             }
         }
-        return null;
+        return;
+    }
+    validateResponse(key, response) {
+        const validator = this.responseValidators[key];
+        if (validator) {
+            const isValid = validator(response);
+            if (validator.errors) {
+                console.warn(`Server response for ${key} did not match expected schema, this should be updated in tachyon-client:`);
+                for (const error of validator.errors) {
+                    console.warn(error);
+                }
+                return validator.errors;
+            }
+        }
+        return;
     }
 }
 exports.TachyonClient = TachyonClient;

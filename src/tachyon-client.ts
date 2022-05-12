@@ -1,6 +1,7 @@
-import { Static, TObject } from "@sinclair/typebox";
+import { Static, TObject, Type } from "@sinclair/typebox";
 import Ajv, { ValidateFunction } from "ajv";
 import { Signal, SignalBinding, objectKeys } from "jaz-ts-utils";
+import { type } from "os";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
@@ -43,7 +44,8 @@ export class TachyonClient {
     protected loggedIn = false;
     protected connected = false;
     protected ajv: Ajv;
-    protected responseValidators: Record<string, ValidateFunction> = {};
+    protected requestValidators: { [key in RequestKey]?: ValidateFunction } = {};
+    protected responseValidators: { [key in ResponseKey]?: ValidateFunction } = {};
 
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -55,8 +57,15 @@ export class TachyonClient {
         this.ajv = new Ajv();
         this.ajv.addKeyword('kind');
         this.ajv.addKeyword('modifier');
+        objectKeys(requests).forEach((key) => {
+            const requestSchema = requests[key];
+            requestSchema.additionalProperties = false;
+            const validator = this.ajv.compile(requestSchema);
+            this.requestValidators[key] = validator;
+        });
         objectKeys(responses).forEach((key) => {
             const responseSchema = responses[key];
+            responseSchema.additionalProperties = false;
             const validator = this.ajv.compile(responseSchema);
             this.responseValidators[key] = validator;
         });
@@ -178,12 +187,15 @@ export class TachyonClient {
                 }
             });
 
+            this.validateRequest(requestKey as RequestKey, data);
+
             if (responseKey && responseKey !== "none") {
                 const signalBinding = this.onResponse(responseKey).add((data) => {
                     signalBinding.destroy();
 
                     if (responseKey && responseKey in responses) {
-                        this.validateResponse(responseKey, data);
+                        const { cmd, ...response } = data;
+                        this.validateResponse(responseKey as ResponseKey, response);
                     }
 
                     resolve(data as any);
@@ -256,18 +268,33 @@ export class TachyonClient {
         }
     }
 
-    protected validateResponse(key: string, response: Record<string, unknown>) {
-        const validator = this.responseValidators[key];
+    protected validateRequest(key: RequestKey, request: Record<string, unknown>) {
+        const validator = this.requestValidators[key];
         if (validator) {
-            const isValid = validator(response);
+            const isValid = validator(request);
             if (validator.errors) {
-                console.warn(`Server response did not match expected schema, this should be updated in tachyon-client:`);
+                console.warn(`Client request for ${key} did not match expected schema, this should be updated in tachyon-client:`);
                 for (const error of validator.errors) {
                     console.warn(error);
                 }
                 return validator.errors;
             }
         }
-        return null;
+        return;
+    }
+
+    protected validateResponse(key: ResponseKey, response: Record<string, unknown>) {
+        const validator = this.responseValidators[key];
+        if (validator) {
+            const isValid = validator(response);
+            if (validator.errors) {
+                console.warn(`Server response for ${key} did not match expected schema, this should be updated in tachyon-client:`);
+                for (const error of validator.errors) {
+                    console.warn(error);
+                }
+                return validator.errors;
+            }
+        }
+        return;
     }
 }

@@ -7,12 +7,14 @@ exports.userSchema = typebox_1.Type.Object({
     springid: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.String()]),
     name: typebox_1.Type.String(),
     bot: typebox_1.Type.Boolean(),
-    clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()])
-});
+    clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
+    country: typebox_1.Type.String(),
+    icons: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.Any())
+}, { additionalProperties: false });
 exports.myUserSchema = typebox_1.Type.Intersect([exports.userSchema, typebox_1.Type.Object({
         friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
         friends: typebox_1.Type.Array(typebox_1.Type.Number())
-    })]);
+    }, { additionalProperties: false })]);
 exports.clientSchema = typebox_1.Type.Object({
     ally_team_number: typebox_1.Type.Number(),
     away: typebox_1.Type.Boolean(),
@@ -23,7 +25,7 @@ exports.clientSchema = typebox_1.Type.Object({
     team_colour: typebox_1.Type.String(),
     team_number: typebox_1.Type.Number(),
     userid: typebox_1.Type.Number()
-});
+}, { additionalProperties: false });
 exports.botSchema = typebox_1.Type.Object({
     ai_dll: typebox_1.Type.String(),
     ally_team_number: typebox_1.Type.Number(),
@@ -37,7 +39,7 @@ exports.botSchema = typebox_1.Type.Object({
     sync: typebox_1.Type.Number(),
     team_colour: typebox_1.Type.String(),
     team_number: typebox_1.Type.Number(),
-});
+}, { additionalProperties: false });
 exports.responses = {
     "s.auth.disconnect": typebox_1.Type.Object({}),
     "s.system.pong": typebox_1.Type.Object({}),
@@ -62,6 +64,7 @@ exports.responses = {
         reason: typebox_1.Type.Optional(typebox_1.Type.String())
     }),
     "s.lobby.query": typebox_1.Type.Object({
+        result: typebox_1.Type.String(),
         lobbies: typebox_1.Type.Array(typebox_1.Type.Object({
             bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),
             disabled_units: typebox_1.Type.Array(typebox_1.Type.String()),
