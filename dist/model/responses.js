@@ -62,7 +62,9 @@ exports.lobbySchema = typebox_1.Type.Object({
 }, { additionalProperties: false });
 exports.responses = {
     "s.auth.disconnect": typebox_1.Type.Object({}),
-    "s.system.pong": typebox_1.Type.Object({}),
+    "s.system.pong": typebox_1.Type.Object({
+        time: typebox_1.Type.Number(),
+    }),
     "s.auth.register": typebox_1.Type.Object({
         result: typebox_1.Type.String(),
         reason: typebox_1.Type.Optional(typebox_1.Type.String()),

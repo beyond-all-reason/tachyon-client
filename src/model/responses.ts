@@ -65,7 +65,9 @@ export const lobbySchema = Type.Object({
 
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
-    "s.system.pong": Type.Object({}),
+    "s.system.pong": Type.Object({
+        time: Type.Number(),
+    }),
     "s.auth.register": Type.Object({
         result: Type.String(),
         reason: Type.Optional(Type.String()),
