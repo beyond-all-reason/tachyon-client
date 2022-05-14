@@ -273,7 +273,9 @@ export class TachyonClient {
         if (validator) {
             const isValid = validator(request);
             if (validator.errors) {
-                console.warn(`Client request for ${key} did not match expected schema, this should be updated in tachyon-client`, validator.errors);
+                for (const error of validator.errors) {
+                    console.warn(`Client request for ${key} did not match expected schema. ${error.instancePath} ${error.message}. This should be updated in tachyon-client.`, error);
+                }
                 return validator.errors;
             }
         }
@@ -285,7 +287,9 @@ export class TachyonClient {
         if (validator) {
             const isValid = validator(response);
             if (validator.errors) {
-                console.warn(`Server response for ${key} did not match expected schema, this should be updated in tachyon-client`, validator.errors);
+                for (const error of validator.errors) {
+                    console.warn(`Server response for ${key} did not match expected schema. ${error.instancePath} ${error.message}. This should be updated in tachyon-client.`, error);
+                }
                 return validator.errors;
             }
         }
