@@ -79,6 +79,10 @@ export declare const lobbySchema: import("@sinclair/typebox").TObject<{
 }>;
 export declare const responses: {
     readonly "s.auth.disconnect": import("@sinclair/typebox").TObject<{}>;
+    readonly "s.system.server_event": import("@sinclair/typebox").TObject<{
+        event: import("@sinclair/typebox").TString;
+        node: import("@sinclair/typebox").TString;
+    }>;
     readonly "s.system.pong": import("@sinclair/typebox").TObject<{
         time: import("@sinclair/typebox").TNumber;
     }>;

@@ -62,6 +62,10 @@ exports.lobbySchema = typebox_1.Type.Object({
 }, { additionalProperties: false });
 exports.responses = {
     "s.auth.disconnect": typebox_1.Type.Object({}),
+    "s.system.server_event": typebox_1.Type.Object({
+        event: typebox_1.Type.String(),
+        node: typebox_1.Type.String()
+    }),
     "s.system.pong": typebox_1.Type.Object({
         time: typebox_1.Type.Number(),
     }),
