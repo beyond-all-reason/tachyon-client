@@ -13,7 +13,7 @@ export const userSchema = Type.Object({
 export const myUserSchema = Type.Intersect([userSchema, Type.Object({
     friend_requests: Type.Array(Type.Number()),
     friends: Type.Array(Type.Number())
-}, { additionalProperties: false })])
+}, { additionalProperties: false })]);
 
 export const clientSchema = Type.Object({
     ally_team_number: Type.Number(),
@@ -29,7 +29,9 @@ export const clientSchema = Type.Object({
 
 export const botSchema = Type.Object({
     ai_dll: Type.String(),
-    ally_team_number: Type.Number(),
+    player_number: Type.Number(),
+    team_number: Type.Number(),
+    team_colour: Type.String(),
     handicap: Type.Number(),
     name: Type.String(),
     owner_id: Type.Number(),
@@ -38,8 +40,6 @@ export const botSchema = Type.Object({
     ready: Type.Boolean(),
     side: Type.Number(),
     sync: Type.Number(),
-    team_colour: Type.String(),
-    team_number: Type.Number(),
 }, { additionalProperties: false });
 
 export const lobbySchema = Type.Object({

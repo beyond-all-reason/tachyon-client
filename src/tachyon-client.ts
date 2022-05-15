@@ -1,7 +1,7 @@
-import { Static, TObject, Type } from "@sinclair/typebox";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Static } from "@sinclair/typebox";
 import Ajv, { ValidateFunction } from "ajv";
 import { Signal, SignalBinding, objectKeys } from "jaz-ts-utils";
-import { type } from "os";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
@@ -55,8 +55,8 @@ export class TachyonClient {
         }
 
         this.ajv = new Ajv();
-        this.ajv.addKeyword('kind');
-        this.ajv.addKeyword('modifier');
+        this.ajv.addKeyword("kind");
+        this.ajv.addKeyword("modifier");
         objectKeys(requests).forEach((key) => {
             const requestSchema = requests[key];
             requestSchema.additionalProperties = false;
@@ -101,16 +101,16 @@ export class TachyonClient {
                     if (this.config.verbose) {
                         this.config.logMethod("RESPONSE:", command);
                     }
-    
+
                     const responseSignal = this.responseSignals.get(command.cmd);
                     if (responseSignal) {
                         responseSignal.dispatch(command);
                     }
-    
+
                     if (command.error || command.result === "error") {
                         reject(command);
                     }
-                } catch(err) {
+                } catch (err) {
                     console.error("Error parsing tachyon response");
                     throw err;
                 }
@@ -124,13 +124,13 @@ export class TachyonClient {
                 this.startPingInterval();
                 resolve();
             });
-            
+
             this.onClose.disposeAll();
 
             this.socket.on("close", () => {
                 this.onClose.dispatch();
             });
-            
+
             this.onClose.add(() => {
                 this.loggedIn = false;
                 this.stopPingInterval();
@@ -166,7 +166,7 @@ export class TachyonClient {
         });
     }
 
-    public async request<K extends RequestKey | (string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>> {
+    public async request<K extends RequestKey |(string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>> {
         if (!responseKey) {
             responseKey = requestResponseMap[requestKey as keyof typeof requestResponseMap];
         }
@@ -219,7 +219,7 @@ export class TachyonClient {
             request = new Signal();
             this.requestSignals.set(requestKey, request);
         }
-        
+
         return request;
     }
 

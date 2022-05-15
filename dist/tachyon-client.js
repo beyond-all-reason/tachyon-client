@@ -50,8 +50,8 @@ class TachyonClient {
             this.config.rejectUnauthorized = false;
         }
         this.ajv = new ajv_1.default();
-        this.ajv.addKeyword('kind');
-        this.ajv.addKeyword('modifier');
+        this.ajv.addKeyword("kind");
+        this.ajv.addKeyword("modifier");
         (0, jaz_ts_utils_1.objectKeys)(requests_1.requests).forEach((key) => {
             const requestSchema = requests_1.requests[key];
             requestSchema.additionalProperties = false;

@@ -28,7 +28,9 @@ exports.clientSchema = typebox_1.Type.Object({
 }, { additionalProperties: false });
 exports.botSchema = typebox_1.Type.Object({
     ai_dll: typebox_1.Type.String(),
-    ally_team_number: typebox_1.Type.Number(),
+    player_number: typebox_1.Type.Number(),
+    team_number: typebox_1.Type.Number(),
+    team_colour: typebox_1.Type.String(),
     handicap: typebox_1.Type.Number(),
     name: typebox_1.Type.String(),
     owner_id: typebox_1.Type.Number(),
@@ -37,8 +39,6 @@ exports.botSchema = typebox_1.Type.Object({
     ready: typebox_1.Type.Boolean(),
     side: typebox_1.Type.Number(),
     sync: typebox_1.Type.Number(),
-    team_colour: typebox_1.Type.String(),
-    team_number: typebox_1.Type.Number(),
 }, { additionalProperties: false });
 exports.lobbySchema = typebox_1.Type.Object({
     bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),

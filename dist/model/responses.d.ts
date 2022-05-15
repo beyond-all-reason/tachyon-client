@@ -32,7 +32,9 @@ export declare const clientSchema: import("@sinclair/typebox").TObject<{
 }>;
 export declare const botSchema: import("@sinclair/typebox").TObject<{
     ai_dll: import("@sinclair/typebox").TString;
-    ally_team_number: import("@sinclair/typebox").TNumber;
+    player_number: import("@sinclair/typebox").TNumber;
+    team_number: import("@sinclair/typebox").TNumber;
+    team_colour: import("@sinclair/typebox").TString;
     handicap: import("@sinclair/typebox").TNumber;
     name: import("@sinclair/typebox").TString;
     owner_id: import("@sinclair/typebox").TNumber;
@@ -41,13 +43,13 @@ export declare const botSchema: import("@sinclair/typebox").TObject<{
     ready: import("@sinclair/typebox").TBoolean;
     side: import("@sinclair/typebox").TNumber;
     sync: import("@sinclair/typebox").TNumber;
-    team_colour: import("@sinclair/typebox").TString;
-    team_number: import("@sinclair/typebox").TNumber;
 }>;
 export declare const lobbySchema: import("@sinclair/typebox").TObject<{
     bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TObject<{
         ai_dll: import("@sinclair/typebox").TString;
-        ally_team_number: import("@sinclair/typebox").TNumber;
+        player_number: import("@sinclair/typebox").TNumber;
+        team_number: import("@sinclair/typebox").TNumber;
+        team_colour: import("@sinclair/typebox").TString;
         handicap: import("@sinclair/typebox").TNumber;
         name: import("@sinclair/typebox").TString;
         owner_id: import("@sinclair/typebox").TNumber;
@@ -56,8 +58,6 @@ export declare const lobbySchema: import("@sinclair/typebox").TObject<{
         ready: import("@sinclair/typebox").TBoolean;
         side: import("@sinclair/typebox").TNumber;
         sync: import("@sinclair/typebox").TNumber;
-        team_colour: import("@sinclair/typebox").TString;
-        team_number: import("@sinclair/typebox").TNumber;
     }>>;
     disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
     engine_name: import("@sinclair/typebox").TString;
@@ -133,7 +133,9 @@ export declare const responses: {
         lobbies: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
             bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TObject<{
                 ai_dll: import("@sinclair/typebox").TString;
-                ally_team_number: import("@sinclair/typebox").TNumber;
+                player_number: import("@sinclair/typebox").TNumber;
+                team_number: import("@sinclair/typebox").TNumber;
+                team_colour: import("@sinclair/typebox").TString;
                 handicap: import("@sinclair/typebox").TNumber;
                 name: import("@sinclair/typebox").TString;
                 owner_id: import("@sinclair/typebox").TNumber;
@@ -142,8 +144,6 @@ export declare const responses: {
                 ready: import("@sinclair/typebox").TBoolean;
                 side: import("@sinclair/typebox").TNumber;
                 sync: import("@sinclair/typebox").TNumber;
-                team_colour: import("@sinclair/typebox").TString;
-                team_number: import("@sinclair/typebox").TNumber;
             }>>;
             disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
             engine_name: import("@sinclair/typebox").TString;
