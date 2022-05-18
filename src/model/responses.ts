@@ -14,7 +14,8 @@ export const myUserSchema = Type.Intersect([
     userSchema,
     Type.Object({
         friend_requests: Type.Array(Type.Number()),
-        friends: Type.Array(Type.Number())
+        friends: Type.Array(Type.Number()),
+        permissions: Type.Array(Type.String())
     })
 ], { unevaluatedProperties: false });
 

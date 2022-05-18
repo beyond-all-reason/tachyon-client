@@ -15,7 +15,8 @@ exports.myUserSchema = typebox_1.Type.Intersect([
     exports.userSchema,
     typebox_1.Type.Object({
         friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
-        friends: typebox_1.Type.Array(typebox_1.Type.Number())
+        friends: typebox_1.Type.Array(typebox_1.Type.Number()),
+        permissions: typebox_1.Type.Array(typebox_1.Type.String())
     })
 ], { unevaluatedProperties: false });
 exports.clientSchema = typebox_1.Type.Object({

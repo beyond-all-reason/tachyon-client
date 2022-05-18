@@ -18,6 +18,7 @@ export declare const myUserSchema: import("@sinclair/typebox").TIntersect<[impor
 }>, import("@sinclair/typebox").TObject<{
     friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
     friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+    permissions: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
 }>]>;
 export declare const clientSchema: import("@sinclair/typebox").TObject<{
     ready: import("@sinclair/typebox").TBoolean;
@@ -123,6 +124,7 @@ export declare const responses: {
         }>, import("@sinclair/typebox").TObject<{
             friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
             friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            permissions: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
         }>]>>;
     }>;
     readonly "s.auth.verify": import("@sinclair/typebox").TObject<{
@@ -138,6 +140,7 @@ export declare const responses: {
         }>, import("@sinclair/typebox").TObject<{
             friend_requests: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
             friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            permissions: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
         }>]>>;
         reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
     }>;
