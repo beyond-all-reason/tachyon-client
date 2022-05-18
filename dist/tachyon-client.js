@@ -49,7 +49,7 @@ class TachyonClient {
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
-        this.ajv = new _2020_1.default({ allErrors: false });
+        this.ajv = new _2020_1.default({ allErrors: true });
         this.ajv.addKeyword("kind");
         this.ajv.addKeyword("modifier");
         (0, jaz_ts_utils_1.objectKeys)(requests_1.requests).forEach((key) => {
@@ -247,7 +247,6 @@ class TachyonClient {
             if (validator.errors) {
                 for (const error of validator.errors) {
                     console.warn(`Server response for ${key} did not match expected schema. ${error.instancePath} ${error.message}. This should be updated in tachyon-client.`, error);
-                    console.log(JSON.stringify(validator.schema, null, 4));
                 }
                 return validator.errors;
             }
