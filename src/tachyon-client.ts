@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Static } from "@sinclair/typebox";
-import Ajv, { ValidateFunction } from "ajv";
+import Ajv, { ValidateFunction } from "ajv/dist/2020";
 import { Signal, SignalBinding, objectKeys } from "jaz-ts-utils";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
@@ -54,7 +54,7 @@ export class TachyonClient {
             this.config.rejectUnauthorized = false;
         }
 
-        this.ajv = new Ajv();
+        this.ajv = new Ajv({ allErrors: false });
         this.ajv.addKeyword("kind");
         this.ajv.addKeyword("modifier");
         objectKeys(requests).forEach((key) => {
@@ -289,6 +289,7 @@ export class TachyonClient {
             if (validator.errors) {
                 for (const error of validator.errors) {
                     console.warn(`Server response for ${key} did not match expected schema. ${error.instancePath} ${error.message}. This should be updated in tachyon-client.`, error);
+                    console.log(JSON.stringify(validator.schema, null, 4));
                 }
                 return validator.errors;
             }

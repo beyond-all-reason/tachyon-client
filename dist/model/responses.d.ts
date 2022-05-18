@@ -20,45 +20,57 @@ export declare const myUserSchema: import("@sinclair/typebox").TIntersect<[impor
     friends: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
 }>]>;
 export declare const clientSchema: import("@sinclair/typebox").TObject<{
-    ally_team_number: import("@sinclair/typebox").TNumber;
-    away: import("@sinclair/typebox").TBoolean;
-    in_game: import("@sinclair/typebox").TBoolean;
-    lobby_id: import("@sinclair/typebox").TNumber;
     ready: import("@sinclair/typebox").TBoolean;
     player: import("@sinclair/typebox").TBoolean;
-    team_colour: import("@sinclair/typebox").TString;
     team_number: import("@sinclair/typebox").TNumber;
-    userid: import("@sinclair/typebox").TNumber;
-}>;
-export declare const botSchema: import("@sinclair/typebox").TObject<{
-    ai_dll: import("@sinclair/typebox").TString;
     player_number: import("@sinclair/typebox").TNumber;
-    team_number: import("@sinclair/typebox").TNumber;
     team_colour: import("@sinclair/typebox").TString;
-    handicap: import("@sinclair/typebox").TNumber;
-    name: import("@sinclair/typebox").TString;
-    owner_id: import("@sinclair/typebox").TNumber;
-    owner_name: import("@sinclair/typebox").TString;
-    player: import("@sinclair/typebox").TBoolean;
-    ready: import("@sinclair/typebox").TBoolean;
-    side: import("@sinclair/typebox").TNumber;
     sync: import("@sinclair/typebox").TNumber;
 }>;
+export declare const playerSchema: import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+    ready: import("@sinclair/typebox").TBoolean;
+    player: import("@sinclair/typebox").TBoolean;
+    team_number: import("@sinclair/typebox").TNumber;
+    player_number: import("@sinclair/typebox").TNumber;
+    team_colour: import("@sinclair/typebox").TString;
+    sync: import("@sinclair/typebox").TNumber;
+}>, import("@sinclair/typebox").TObject<{
+    userid: import("@sinclair/typebox").TNumber;
+    lobby_id: import("@sinclair/typebox").TNumber;
+    away: import("@sinclair/typebox").TBoolean;
+    in_game: import("@sinclair/typebox").TBoolean;
+}>]>;
+export declare const botSchema: import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+    ready: import("@sinclair/typebox").TBoolean;
+    player: import("@sinclair/typebox").TBoolean;
+    team_number: import("@sinclair/typebox").TNumber;
+    player_number: import("@sinclair/typebox").TNumber;
+    team_colour: import("@sinclair/typebox").TString;
+    sync: import("@sinclair/typebox").TNumber;
+}>, import("@sinclair/typebox").TObject<{
+    owner_id: import("@sinclair/typebox").TNumber;
+    owner_name: import("@sinclair/typebox").TString;
+    ai_dll: import("@sinclair/typebox").TString;
+    handicap: import("@sinclair/typebox").TNumber;
+    side: import("@sinclair/typebox").TNumber;
+    name: import("@sinclair/typebox").TString;
+}>]>;
 export declare const lobbySchema: import("@sinclair/typebox").TObject<{
-    bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TObject<{
-        ai_dll: import("@sinclair/typebox").TString;
-        player_number: import("@sinclair/typebox").TNumber;
+    bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+        ready: import("@sinclair/typebox").TBoolean;
+        player: import("@sinclair/typebox").TBoolean;
         team_number: import("@sinclair/typebox").TNumber;
+        player_number: import("@sinclair/typebox").TNumber;
         team_colour: import("@sinclair/typebox").TString;
-        handicap: import("@sinclair/typebox").TNumber;
-        name: import("@sinclair/typebox").TString;
+        sync: import("@sinclair/typebox").TNumber;
+    }>, import("@sinclair/typebox").TObject<{
         owner_id: import("@sinclair/typebox").TNumber;
         owner_name: import("@sinclair/typebox").TString;
-        player: import("@sinclair/typebox").TBoolean;
-        ready: import("@sinclair/typebox").TBoolean;
+        ai_dll: import("@sinclair/typebox").TString;
+        handicap: import("@sinclair/typebox").TNumber;
         side: import("@sinclair/typebox").TNumber;
-        sync: import("@sinclair/typebox").TNumber;
-    }>>;
+        name: import("@sinclair/typebox").TString;
+    }>]>>;
     disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
     engine_name: import("@sinclair/typebox").TString;
     engine_version: import("@sinclair/typebox").TString;
@@ -76,6 +88,7 @@ export declare const lobbySchema: import("@sinclair/typebox").TObject<{
     started_at: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
     tags: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TString>;
     type: import("@sinclair/typebox").TString;
+    start_rectangles: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>>;
 }>;
 export declare const responses: {
     readonly "s.auth.disconnect": import("@sinclair/typebox").TObject<{}>;
@@ -131,20 +144,21 @@ export declare const responses: {
     readonly "s.lobby.query": import("@sinclair/typebox").TObject<{
         result: import("@sinclair/typebox").TString;
         lobbies: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
-            bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TObject<{
-                ai_dll: import("@sinclair/typebox").TString;
-                player_number: import("@sinclair/typebox").TNumber;
+            bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+                ready: import("@sinclair/typebox").TBoolean;
+                player: import("@sinclair/typebox").TBoolean;
                 team_number: import("@sinclair/typebox").TNumber;
+                player_number: import("@sinclair/typebox").TNumber;
                 team_colour: import("@sinclair/typebox").TString;
-                handicap: import("@sinclair/typebox").TNumber;
-                name: import("@sinclair/typebox").TString;
+                sync: import("@sinclair/typebox").TNumber;
+            }>, import("@sinclair/typebox").TObject<{
                 owner_id: import("@sinclair/typebox").TNumber;
                 owner_name: import("@sinclair/typebox").TString;
-                player: import("@sinclair/typebox").TBoolean;
-                ready: import("@sinclair/typebox").TBoolean;
+                ai_dll: import("@sinclair/typebox").TString;
+                handicap: import("@sinclair/typebox").TNumber;
                 side: import("@sinclair/typebox").TNumber;
-                sync: import("@sinclair/typebox").TNumber;
-            }>>;
+                name: import("@sinclair/typebox").TString;
+            }>]>>;
             disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
             engine_name: import("@sinclair/typebox").TString;
             engine_version: import("@sinclair/typebox").TString;
@@ -162,19 +176,17 @@ export declare const responses: {
             started_at: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
             tags: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TString>;
             type: import("@sinclair/typebox").TString;
+            start_rectangles: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>>;
         }>>;
     }>;
     readonly "s.user.user_and_client_list": import("@sinclair/typebox").TObject<{
         clients: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
-            ally_team_number: import("@sinclair/typebox").TNumber;
-            away: import("@sinclair/typebox").TBoolean;
-            in_game: import("@sinclair/typebox").TBoolean;
-            lobby_id: import("@sinclair/typebox").TNumber;
             ready: import("@sinclair/typebox").TBoolean;
             player: import("@sinclair/typebox").TBoolean;
-            team_colour: import("@sinclair/typebox").TString;
             team_number: import("@sinclair/typebox").TNumber;
-            userid: import("@sinclair/typebox").TNumber;
+            player_number: import("@sinclair/typebox").TNumber;
+            team_colour: import("@sinclair/typebox").TString;
+            sync: import("@sinclair/typebox").TNumber;
         }>>;
         users: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;

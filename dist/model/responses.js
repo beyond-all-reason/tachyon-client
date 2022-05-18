@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.responses = exports.lobbySchema = exports.botSchema = exports.clientSchema = exports.myUserSchema = exports.userSchema = void 0;
+exports.responses = exports.lobbySchema = exports.botSchema = exports.playerSchema = exports.clientSchema = exports.myUserSchema = exports.userSchema = void 0;
 const typebox_1 = require("@sinclair/typebox");
 exports.userSchema = typebox_1.Type.Object({
     id: typebox_1.Type.Number(),
@@ -10,36 +10,42 @@ exports.userSchema = typebox_1.Type.Object({
     clan_id: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
     country: typebox_1.Type.String(),
     icons: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.Any())
-}, { additionalProperties: false });
-exports.myUserSchema = typebox_1.Type.Intersect([exports.userSchema, typebox_1.Type.Object({
+});
+exports.myUserSchema = typebox_1.Type.Intersect([
+    exports.userSchema,
+    typebox_1.Type.Object({
         friend_requests: typebox_1.Type.Array(typebox_1.Type.Number()),
         friends: typebox_1.Type.Array(typebox_1.Type.Number())
-    }, { additionalProperties: false })]);
+    })
+], { unevaluatedProperties: false });
 exports.clientSchema = typebox_1.Type.Object({
-    ally_team_number: typebox_1.Type.Number(),
-    away: typebox_1.Type.Boolean(),
-    in_game: typebox_1.Type.Boolean(),
-    lobby_id: typebox_1.Type.Number(),
     ready: typebox_1.Type.Boolean(),
     player: typebox_1.Type.Boolean(),
-    team_colour: typebox_1.Type.String(),
     team_number: typebox_1.Type.Number(),
-    userid: typebox_1.Type.Number()
-}, { additionalProperties: false });
-exports.botSchema = typebox_1.Type.Object({
-    ai_dll: typebox_1.Type.String(),
     player_number: typebox_1.Type.Number(),
-    team_number: typebox_1.Type.Number(),
     team_colour: typebox_1.Type.String(),
-    handicap: typebox_1.Type.Number(),
-    name: typebox_1.Type.String(),
-    owner_id: typebox_1.Type.Number(),
-    owner_name: typebox_1.Type.String(),
-    player: typebox_1.Type.Boolean(),
-    ready: typebox_1.Type.Boolean(),
-    side: typebox_1.Type.Number(),
     sync: typebox_1.Type.Number(),
-}, { additionalProperties: false });
+});
+exports.playerSchema = typebox_1.Type.Intersect([
+    exports.clientSchema,
+    typebox_1.Type.Object({
+        userid: typebox_1.Type.Number(),
+        lobby_id: typebox_1.Type.Number(),
+        away: typebox_1.Type.Boolean(),
+        in_game: typebox_1.Type.Boolean(),
+    })
+], { unevaluatedProperties: false });
+exports.botSchema = typebox_1.Type.Intersect([
+    exports.clientSchema,
+    typebox_1.Type.Object({
+        owner_id: typebox_1.Type.Number(),
+        owner_name: typebox_1.Type.String(),
+        ai_dll: typebox_1.Type.String(),
+        handicap: typebox_1.Type.Number(),
+        side: typebox_1.Type.Number(),
+        name: typebox_1.Type.String()
+    })
+], { unevaluatedProperties: false });
 exports.lobbySchema = typebox_1.Type.Object({
     bots: typebox_1.Type.Record(typebox_1.Type.String(), exports.botSchema),
     disabled_units: typebox_1.Type.Array(typebox_1.Type.String()),
@@ -59,7 +65,8 @@ exports.lobbySchema = typebox_1.Type.Object({
     started_at: typebox_1.Type.Union([typebox_1.Type.Number(), typebox_1.Type.Null()]),
     tags: typebox_1.Type.Record(typebox_1.Type.String(), typebox_1.Type.String()),
     type: typebox_1.Type.String(),
-}, { additionalProperties: false });
+    start_rectangles: typebox_1.Type.Record(typebox_1.Type.Number(), typebox_1.Type.Array(typebox_1.Type.Number())),
+});
 exports.responses = {
     "s.auth.disconnect": typebox_1.Type.Object({}),
     "s.system.server_event": typebox_1.Type.Object({

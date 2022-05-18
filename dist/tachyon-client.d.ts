@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { Static } from "@sinclair/typebox";
-import Ajv, { ValidateFunction } from "ajv";
+import Ajv, { ValidateFunction } from "ajv/dist/2020";
 import { Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
@@ -56,6 +56,6 @@ export declare class TachyonClient {
     protected rawRequest(request: Record<string, unknown>): void;
     protected startPingInterval(): void;
     protected stopPingInterval(): void;
-    protected validateRequest(key: RequestKey, request: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
-    protected validateResponse(key: ResponseKey, response: Record<string, unknown>): import("ajv").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
+    protected validateRequest(key: RequestKey, request: Record<string, unknown>): import("ajv/dist/types").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
+    protected validateResponse(key: ResponseKey, response: Record<string, unknown>): import("ajv/dist/types").ErrorObject<string, Record<string, any>, unknown>[] | undefined;
 }

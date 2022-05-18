@@ -23,7 +23,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TachyonClient = exports.defaultTachyonClientOptions = void 0;
-const ajv_1 = __importDefault(require("ajv"));
+const _2020_1 = __importDefault(require("ajv/dist/2020"));
 const jaz_ts_utils_1 = require("jaz-ts-utils");
 const tls = __importStar(require("tls"));
 const gzip = __importStar(require("zlib"));
@@ -49,7 +49,7 @@ class TachyonClient {
         if (options.rejectUnauthorized === undefined && this.config.host === "localhost") {
             this.config.rejectUnauthorized = false;
         }
-        this.ajv = new ajv_1.default();
+        this.ajv = new _2020_1.default({ allErrors: false });
         this.ajv.addKeyword("kind");
         this.ajv.addKeyword("modifier");
         (0, jaz_ts_utils_1.objectKeys)(requests_1.requests).forEach((key) => {
@@ -247,6 +247,7 @@ class TachyonClient {
             if (validator.errors) {
                 for (const error of validator.errors) {
                     console.warn(`Server response for ${key} did not match expected schema. ${error.instancePath} ${error.message}. This should be updated in tachyon-client.`, error);
+                    console.log(JSON.stringify(validator.schema, null, 4));
                 }
                 return validator.errors;
             }

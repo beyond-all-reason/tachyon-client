@@ -8,39 +8,46 @@ export const userSchema = Type.Object({
     clan_id: Type.Union([Type.Number(), Type.Null()]),
     country: Type.String(),
     icons: Type.Record(Type.String(), Type.Any())
-}, { additionalProperties: false });
+});
 
-export const myUserSchema = Type.Intersect([userSchema, Type.Object({
-    friend_requests: Type.Array(Type.Number()),
-    friends: Type.Array(Type.Number())
-}, { additionalProperties: false })]);
+export const myUserSchema = Type.Intersect([
+    userSchema,
+    Type.Object({
+        friend_requests: Type.Array(Type.Number()),
+        friends: Type.Array(Type.Number())
+    })
+], { unevaluatedProperties: false });
 
 export const clientSchema = Type.Object({
-    ally_team_number: Type.Number(),
-    away: Type.Boolean(),
-    in_game: Type.Boolean(),
-    lobby_id: Type.Number(),
     ready: Type.Boolean(),
     player: Type.Boolean(),
-    team_colour: Type.String(),
     team_number: Type.Number(),
-    userid: Type.Number()
-}, { additionalProperties: false });
-
-export const botSchema = Type.Object({
-    ai_dll: Type.String(),
     player_number: Type.Number(),
-    team_number: Type.Number(),
     team_colour: Type.String(),
-    handicap: Type.Number(),
-    name: Type.String(),
-    owner_id: Type.Number(),
-    owner_name: Type.String(),
-    player: Type.Boolean(),
-    ready: Type.Boolean(),
-    side: Type.Number(),
     sync: Type.Number(),
-}, { additionalProperties: false });
+});
+
+export const playerSchema = Type.Intersect([
+    clientSchema,
+    Type.Object({
+        userid: Type.Number(),
+        lobby_id: Type.Number(),
+        away: Type.Boolean(),
+        in_game: Type.Boolean(),
+    })
+], { unevaluatedProperties: false });
+
+export const botSchema = Type.Intersect([
+    clientSchema,
+    Type.Object({
+        owner_id: Type.Number(),
+        owner_name: Type.String(),
+        ai_dll: Type.String(),
+        handicap: Type.Number(),
+        side: Type.Number(),
+        name: Type.String()
+    })
+], { unevaluatedProperties: false });
 
 export const lobbySchema = Type.Object({
     bots: Type.Record(Type.String(), botSchema),
@@ -61,7 +68,8 @@ export const lobbySchema = Type.Object({
     started_at: Type.Union([Type.Number(), Type.Null()]),
     tags: Type.Record(Type.String(), Type.String()),
     type: Type.String(),
-}, { additionalProperties: false });
+    start_rectangles: Type.Record(Type.Number(), Type.Array(Type.Number())),
+});
 
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
