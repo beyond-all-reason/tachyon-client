@@ -54,13 +54,17 @@ class TachyonClient {
         this.ajv.addKeyword("modifier");
         (0, jaz_ts_utils_1.objectKeys)(requests_1.requests).forEach((key) => {
             const requestSchema = requests_1.requests[key];
-            requestSchema.additionalProperties = false;
+            if (requestSchema.type === "object") {
+                requestSchema.additionalProperties = false;
+            }
             const validator = this.ajv.compile(requestSchema);
             this.requestValidators[key] = validator;
         });
         (0, jaz_ts_utils_1.objectKeys)(responses_1.responses).forEach((key) => {
             const responseSchema = responses_1.responses[key];
-            responseSchema.additionalProperties = false;
+            if (responseSchema.type === "object") {
+                responseSchema.additionalProperties = false;
+            }
             const validator = this.ajv.compile(responseSchema);
             this.responseValidators[key] = validator;
         });
