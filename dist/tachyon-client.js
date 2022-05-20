@@ -91,6 +91,13 @@ class TachyonClient {
                     if (this.config.verbose) {
                         this.config.logMethod("RESPONSE:", command);
                     }
+                    const { cmd: responseKey, ...responseData } = command;
+                    if (responseKey in responses_1.responses) {
+                        this.validateResponse(responseKey, responseData);
+                    }
+                    else {
+                        console.warn(`No response handler for ${responseKey}`);
+                    }
                     const responseSignal = this.responseSignals.get(command.cmd);
                     if (responseSignal) {
                         responseSignal.dispatch(command);
@@ -171,10 +178,6 @@ class TachyonClient {
             if (responseKey && responseKey !== "none") {
                 const signalBinding = this.onResponse(responseKey).add((data) => {
                     signalBinding.destroy();
-                    if (responseKey && responseKey in responses_1.responses) {
-                        const { cmd, ...response } = data;
-                        this.validateResponse(responseKey, response);
-                    }
                     resolve(data);
                 });
                 this.rawRequest({ cmd: requestKey, ...data });

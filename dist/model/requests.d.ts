@@ -30,4 +30,29 @@ export declare const requests: {
         id_list: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
         include_clients: import("@sinclair/typebox").TLiteral<true>;
     }>;
+    readonly "c.lobby.join": import("@sinclair/typebox").TObject<{
+        lobby_id: import("@sinclair/typebox").TNumber;
+        password: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
+    }>;
+    readonly "c.lobby_host.respond_to_join_request": import("@sinclair/typebox").TObject<{
+        userid: import("@sinclair/typebox").TNumber;
+        response: import("@sinclair/typebox").TString;
+        reason: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TLiteral<"approve">, import("@sinclair/typebox").TLiteral<"reject">]>;
+    }>;
+    readonly "c.lobby.leave": import("@sinclair/typebox").TObject<{}>;
+    readonly "c.lobby.create": import("@sinclair/typebox").TObject<{
+        name: import("@sinclair/typebox").TString;
+        nattype: import("@sinclair/typebox").TString;
+        password: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
+        port: import("@sinclair/typebox").TNumber;
+        game_hash: import("@sinclair/typebox").TString;
+        map_hash: import("@sinclair/typebox").TString;
+        map_name: import("@sinclair/typebox").TString;
+        game_name: import("@sinclair/typebox").TString;
+        engine_name: import("@sinclair/typebox").TString;
+        engine_version: import("@sinclair/typebox").TString;
+        settings: import("@sinclair/typebox").TObject<{
+            max_players: import("@sinclair/typebox").TNumber;
+        }>;
+    }>;
 };

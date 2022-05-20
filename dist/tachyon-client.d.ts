@@ -23,8 +23,8 @@ export declare type RequestKey = keyof typeof requests;
 export declare type ResponseKey = keyof typeof responses;
 export declare type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
 export declare type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
-export declare type RequestResponseKey<K extends RequestKey> = typeof requestResponseMap[K];
-export declare type RequestResponseType<K extends RequestKey> = ResponseType<RequestResponseKey<K>>;
+export declare type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
+export declare type RequestResponseType<K extends RequestKey> = RequestResponseKey<K> extends never ? never : ResponseType<RequestResponseKey<K>>;
 export declare class TachyonClient {
     config: TachyonClientOptions;
     socket?: tls.TLSSocket;

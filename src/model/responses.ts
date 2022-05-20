@@ -108,5 +108,45 @@ export const responses = {
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(clientSchema),
         users: Type.Array(userSchema),
+    }),
+    "s.lobby.join": Type.Object({
+        result: Type.Union([Type.Literal("waiting_for_host"), Type.Literal("failure")]),
+        reason: Type.Optional(Type.String()),
+    }),
+    "s.lobby_host.request_to_join": Type.Object({
+        userid: Type.Number(),
+    }),
+    "s.lobby.join_response": Type.Union([
+        Type.Object({
+            result: Type.Literal("approve"),
+            lobby: lobbySchema,
+        }),
+        Type.Object({
+            result: Type.Literal("reject"),
+            reason: Type.String(),
+        }),
+    ]),
+    "s.lobby.announce": Type.Object({
+        lobby_id: Type.Number(),
+        message: Type.String(),
+        sender: Type.Number(),
+    }),
+    "s.lobby.updated": Type.Object({
+        lobby: lobbySchema
+    }),
+    "s.lobby.create": Type.Union([
+        Type.Object({
+            result: Type.Literal("success"),
+            lobby: lobbySchema,
+        }),
+        Type.Object({
+            result: Type.Literal("failure"),
+            reason: Type.String(),
+        }),
+    ]),
+    "s.lobby.say": Type.Object({
+        lobby_id: Type.Number(),
+        sender: Type.Number(),
+        message: Type.String(),
     })
 } as const;

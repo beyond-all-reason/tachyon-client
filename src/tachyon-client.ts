@@ -29,8 +29,8 @@ export type RequestKey = keyof typeof requests;
 export type ResponseKey = keyof typeof responses;
 export type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
 export type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
-export type RequestResponseKey<K extends RequestKey> = typeof requestResponseMap[K];
-export type RequestResponseType<K extends RequestKey> = ResponseType<RequestResponseKey<K>>;
+export type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
+export type RequestResponseType<K extends RequestKey> = RequestResponseKey<K> extends never ? never : ResponseType<RequestResponseKey<K>>;
 
 export class TachyonClient {
     public config: TachyonClientOptions;
@@ -100,6 +100,14 @@ export class TachyonClient {
                     const command = JSON.parse(jsonString);
                     if (this.config.verbose) {
                         this.config.logMethod("RESPONSE:", command);
+                    }
+
+                    const { cmd: responseKey, ...responseData } = command;
+
+                    if (responseKey in responses) {
+                        this.validateResponse(responseKey, responseData);
+                    } else {
+                        console.warn(`No response handler for ${responseKey}`);
                     }
 
                     const responseSignal = this.responseSignals.get(command.cmd);
@@ -192,11 +200,6 @@ export class TachyonClient {
             if (responseKey && responseKey !== "none") {
                 const signalBinding = this.onResponse(responseKey).add((data) => {
                     signalBinding.destroy();
-
-                    if (responseKey && responseKey in responses) {
-                        const { cmd, ...response } = data;
-                        this.validateResponse(responseKey as ResponseKey, response);
-                    }
 
                     resolve(data as any);
                 });

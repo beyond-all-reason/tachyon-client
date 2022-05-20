@@ -104,6 +104,46 @@ exports.responses = {
     "s.user.user_and_client_list": typebox_1.Type.Object({
         clients: typebox_1.Type.Array(exports.clientSchema),
         users: typebox_1.Type.Array(exports.userSchema),
+    }),
+    "s.lobby.join": typebox_1.Type.Object({
+        result: typebox_1.Type.Union([typebox_1.Type.Literal("waiting_for_host"), typebox_1.Type.Literal("failure")]),
+        reason: typebox_1.Type.Optional(typebox_1.Type.String()),
+    }),
+    "s.lobby_host.request_to_join": typebox_1.Type.Object({
+        userid: typebox_1.Type.Number(),
+    }),
+    "s.lobby.join_response": typebox_1.Type.Union([
+        typebox_1.Type.Object({
+            result: typebox_1.Type.Literal("approve"),
+            lobby: exports.lobbySchema,
+        }),
+        typebox_1.Type.Object({
+            result: typebox_1.Type.Literal("reject"),
+            reason: typebox_1.Type.String(),
+        }),
+    ]),
+    "s.lobby.announce": typebox_1.Type.Object({
+        lobby_id: typebox_1.Type.Number(),
+        message: typebox_1.Type.String(),
+        sender: typebox_1.Type.Number(),
+    }),
+    "s.lobby.updated": typebox_1.Type.Object({
+        lobby: exports.lobbySchema
+    }),
+    "s.lobby.create": typebox_1.Type.Union([
+        typebox_1.Type.Object({
+            result: typebox_1.Type.Literal("success"),
+            lobby: exports.lobbySchema,
+        }),
+        typebox_1.Type.Object({
+            result: typebox_1.Type.Literal("failure"),
+            reason: typebox_1.Type.String(),
+        }),
+    ]),
+    "s.lobby.say": typebox_1.Type.Object({
+        lobby_id: typebox_1.Type.Number(),
+        sender: typebox_1.Type.Number(),
+        message: typebox_1.Type.String(),
     })
 };
 //# sourceMappingURL=responses.js.map

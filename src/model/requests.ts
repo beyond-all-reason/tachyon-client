@@ -31,5 +31,30 @@ export const requests = {
     "c.user.list_users_from_ids": Type.Object({
         id_list: Type.Array(Type.Number()),
         include_clients: Type.Literal(true), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
+    }),
+    "c.lobby.join": Type.Object({
+        lobby_id: Type.Number(),
+        password: Type.Optional(Type.String()),
+    }),
+    "c.lobby_host.respond_to_join_request": Type.Object({
+        userid: Type.Number(),
+        response: Type.String(),
+        reason: Type.Union([Type.Literal("approve"), Type.Literal("reject")]),
+    }),
+    "c.lobby.leave": Type.Object({}),
+    "c.lobby.create": Type.Object({
+        name: Type.String(),
+        nattype: Type.String(),
+        password: Type.Optional(Type.String()),
+        port: Type.Number(),
+        game_hash: Type.String(),
+        map_hash: Type.String(),
+        map_name: Type.String(),
+        game_name: Type.String(),
+        engine_name: Type.String(),
+        engine_version: Type.String(),
+        settings: Type.Object({
+            max_players: Type.Number(),
+        }),
     })
 } as const;

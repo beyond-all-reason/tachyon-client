@@ -201,4 +201,140 @@ export declare const responses: {
             icons: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TAny>;
         }>>;
     }>;
+    readonly "s.lobby.join": import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TLiteral<"waiting_for_host">, import("@sinclair/typebox").TLiteral<"failure">]>;
+        reason: import("@sinclair/typebox").TOptional<import("@sinclair/typebox").TString>;
+    }>;
+    readonly "s.lobby_host.request_to_join": import("@sinclair/typebox").TObject<{
+        userid: import("@sinclair/typebox").TNumber;
+    }>;
+    readonly "s.lobby.join_response": import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TLiteral<"approve">;
+        lobby: import("@sinclair/typebox").TObject<{
+            bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+                ready: import("@sinclair/typebox").TBoolean;
+                player: import("@sinclair/typebox").TBoolean;
+                team_number: import("@sinclair/typebox").TNumber;
+                player_number: import("@sinclair/typebox").TNumber;
+                team_colour: import("@sinclair/typebox").TString;
+                sync: import("@sinclair/typebox").TNumber;
+            }>, import("@sinclair/typebox").TObject<{
+                owner_id: import("@sinclair/typebox").TNumber;
+                owner_name: import("@sinclair/typebox").TString;
+                ai_dll: import("@sinclair/typebox").TString;
+                handicap: import("@sinclair/typebox").TNumber;
+                side: import("@sinclair/typebox").TNumber;
+                name: import("@sinclair/typebox").TString;
+            }>]>>;
+            disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
+            engine_name: import("@sinclair/typebox").TString;
+            engine_version: import("@sinclair/typebox").TString;
+            founder_id: import("@sinclair/typebox").TNumber;
+            id: import("@sinclair/typebox").TNumber;
+            in_progress: import("@sinclair/typebox").TBoolean;
+            ip: import("@sinclair/typebox").TString;
+            locked: import("@sinclair/typebox").TBoolean;
+            map_hash: import("@sinclair/typebox").TString;
+            map_name: import("@sinclair/typebox").TString;
+            max_players: import("@sinclair/typebox").TNumber;
+            name: import("@sinclair/typebox").TString;
+            password: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TString, import("@sinclair/typebox").TNull]>;
+            players: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            started_at: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            tags: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TString>;
+            type: import("@sinclair/typebox").TString;
+            start_rectangles: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>>;
+        }>;
+    }>, import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TLiteral<"reject">;
+        reason: import("@sinclair/typebox").TString;
+    }>]>;
+    readonly "s.lobby.announce": import("@sinclair/typebox").TObject<{
+        lobby_id: import("@sinclair/typebox").TNumber;
+        message: import("@sinclair/typebox").TString;
+        sender: import("@sinclair/typebox").TNumber;
+    }>;
+    readonly "s.lobby.updated": import("@sinclair/typebox").TObject<{
+        lobby: import("@sinclair/typebox").TObject<{
+            bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+                ready: import("@sinclair/typebox").TBoolean;
+                player: import("@sinclair/typebox").TBoolean;
+                team_number: import("@sinclair/typebox").TNumber;
+                player_number: import("@sinclair/typebox").TNumber;
+                team_colour: import("@sinclair/typebox").TString;
+                sync: import("@sinclair/typebox").TNumber;
+            }>, import("@sinclair/typebox").TObject<{
+                owner_id: import("@sinclair/typebox").TNumber;
+                owner_name: import("@sinclair/typebox").TString;
+                ai_dll: import("@sinclair/typebox").TString;
+                handicap: import("@sinclair/typebox").TNumber;
+                side: import("@sinclair/typebox").TNumber;
+                name: import("@sinclair/typebox").TString;
+            }>]>>;
+            disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
+            engine_name: import("@sinclair/typebox").TString;
+            engine_version: import("@sinclair/typebox").TString;
+            founder_id: import("@sinclair/typebox").TNumber;
+            id: import("@sinclair/typebox").TNumber;
+            in_progress: import("@sinclair/typebox").TBoolean;
+            ip: import("@sinclair/typebox").TString;
+            locked: import("@sinclair/typebox").TBoolean;
+            map_hash: import("@sinclair/typebox").TString;
+            map_name: import("@sinclair/typebox").TString;
+            max_players: import("@sinclair/typebox").TNumber;
+            name: import("@sinclair/typebox").TString;
+            password: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TString, import("@sinclair/typebox").TNull]>;
+            players: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            started_at: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            tags: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TString>;
+            type: import("@sinclair/typebox").TString;
+            start_rectangles: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>>;
+        }>;
+    }>;
+    readonly "s.lobby.create": import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TLiteral<"success">;
+        lobby: import("@sinclair/typebox").TObject<{
+            bots: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
+                ready: import("@sinclair/typebox").TBoolean;
+                player: import("@sinclair/typebox").TBoolean;
+                team_number: import("@sinclair/typebox").TNumber;
+                player_number: import("@sinclair/typebox").TNumber;
+                team_colour: import("@sinclair/typebox").TString;
+                sync: import("@sinclair/typebox").TNumber;
+            }>, import("@sinclair/typebox").TObject<{
+                owner_id: import("@sinclair/typebox").TNumber;
+                owner_name: import("@sinclair/typebox").TString;
+                ai_dll: import("@sinclair/typebox").TString;
+                handicap: import("@sinclair/typebox").TNumber;
+                side: import("@sinclair/typebox").TNumber;
+                name: import("@sinclair/typebox").TString;
+            }>]>>;
+            disabled_units: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TString>;
+            engine_name: import("@sinclair/typebox").TString;
+            engine_version: import("@sinclair/typebox").TString;
+            founder_id: import("@sinclair/typebox").TNumber;
+            id: import("@sinclair/typebox").TNumber;
+            in_progress: import("@sinclair/typebox").TBoolean;
+            ip: import("@sinclair/typebox").TString;
+            locked: import("@sinclair/typebox").TBoolean;
+            map_hash: import("@sinclair/typebox").TString;
+            map_name: import("@sinclair/typebox").TString;
+            max_players: import("@sinclair/typebox").TNumber;
+            name: import("@sinclair/typebox").TString;
+            password: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TString, import("@sinclair/typebox").TNull]>;
+            players: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>;
+            started_at: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TNull]>;
+            tags: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TString, import("@sinclair/typebox").TString>;
+            type: import("@sinclair/typebox").TString;
+            start_rectangles: import("@sinclair/typebox").TRecord<import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TArray<import("@sinclair/typebox").TNumber>>;
+        }>;
+    }>, import("@sinclair/typebox").TObject<{
+        result: import("@sinclair/typebox").TLiteral<"failure">;
+        reason: import("@sinclair/typebox").TString;
+    }>]>;
+    readonly "s.lobby.say": import("@sinclair/typebox").TObject<{
+        lobby_id: import("@sinclair/typebox").TNumber;
+        sender: import("@sinclair/typebox").TNumber;
+        message: import("@sinclair/typebox").TString;
+    }>;
 };
