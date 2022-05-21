@@ -183,14 +183,19 @@ export declare const responses: {
         }>>;
     }>;
     readonly "s.user.user_and_client_list": import("@sinclair/typebox").TObject<{
-        clients: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
+        clients: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TIntersect<[import("@sinclair/typebox").TObject<{
             ready: import("@sinclair/typebox").TBoolean;
             player: import("@sinclair/typebox").TBoolean;
             team_number: import("@sinclair/typebox").TNumber;
             player_number: import("@sinclair/typebox").TNumber;
             team_colour: import("@sinclair/typebox").TString;
             sync: import("@sinclair/typebox").TNumber;
-        }>>;
+        }>, import("@sinclair/typebox").TObject<{
+            userid: import("@sinclair/typebox").TNumber;
+            lobby_id: import("@sinclair/typebox").TNumber;
+            away: import("@sinclair/typebox").TBoolean;
+            in_game: import("@sinclair/typebox").TBoolean;
+        }>]>>;
         users: import("@sinclair/typebox").TArray<import("@sinclair/typebox").TObject<{
             id: import("@sinclair/typebox").TNumber;
             springid: import("@sinclair/typebox").TUnion<[import("@sinclair/typebox").TNumber, import("@sinclair/typebox").TString]>;

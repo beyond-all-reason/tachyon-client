@@ -106,7 +106,7 @@ export const responses = {
         lobbies: Type.Array(lobbySchema)
     }),
     "s.user.user_and_client_list": Type.Object({
-        clients: Type.Array(clientSchema),
+        clients: Type.Array(playerSchema),
         users: Type.Array(userSchema),
     }),
     "s.lobby.join": Type.Object({

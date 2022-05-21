@@ -102,7 +102,7 @@ exports.responses = {
         lobbies: typebox_1.Type.Array(exports.lobbySchema)
     }),
     "s.user.user_and_client_list": typebox_1.Type.Object({
-        clients: typebox_1.Type.Array(exports.clientSchema),
+        clients: typebox_1.Type.Array(exports.playerSchema),
         users: typebox_1.Type.Array(exports.userSchema),
     }),
     "s.lobby.join": typebox_1.Type.Object({
