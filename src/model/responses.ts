@@ -2,22 +2,31 @@ import { Type } from "@sinclair/typebox";
 
 export const userSchema = Type.Object({
     id: Type.Number(),
-    springid: Type.Union([Type.Number(), Type.String()]), // TODO: Server will fix this
+    springid: Type.Union([
+        Type.Number(),
+        Type.String(),
+    ]), // TODO: Server will fix this
     name: Type.String(),
     bot: Type.Boolean(),
-    clan_id: Type.Union([Type.Number(), Type.Null()]),
+    clan_id: Type.Union([
+        Type.Number(),
+        Type.Null(),
+    ]),
     country: Type.String(),
-    icons: Type.Record(Type.String(), Type.Any())
+    icons: Type.Record(Type.String(), Type.Any()),
 });
 
-export const myUserSchema = Type.Intersect([
-    userSchema,
-    Type.Object({
-        friend_requests: Type.Array(Type.Number()),
-        friends: Type.Array(Type.Number()),
-        permissions: Type.Array(Type.String())
-    })
-], { unevaluatedProperties: false });
+export const myUserSchema = Type.Intersect(
+    [
+        userSchema,
+        Type.Object({
+            friend_requests: Type.Array(Type.Number()),
+            friends: Type.Array(Type.Number()),
+            permissions: Type.Array(Type.String()),
+        }),
+    ],
+    { unevaluatedProperties: false }
+);
 
 export const clientSchema = Type.Object({
     ready: Type.Boolean(),
@@ -28,27 +37,33 @@ export const clientSchema = Type.Object({
     sync: Type.Number(),
 });
 
-export const playerSchema = Type.Intersect([
-    clientSchema,
-    Type.Object({
-        userid: Type.Number(),
-        lobby_id: Type.Number(),
-        away: Type.Boolean(),
-        in_game: Type.Boolean(),
-    })
-], { unevaluatedProperties: false });
+export const playerSchema = Type.Intersect(
+    [
+        clientSchema,
+        Type.Object({
+            userid: Type.Number(),
+            lobby_id: Type.Number(),
+            away: Type.Boolean(),
+            in_game: Type.Boolean(),
+        }),
+    ],
+    { unevaluatedProperties: false }
+);
 
-export const botSchema = Type.Intersect([
-    clientSchema,
-    Type.Object({
-        owner_id: Type.Number(),
-        owner_name: Type.String(),
-        ai_dll: Type.String(),
-        handicap: Type.Number(),
-        side: Type.Number(),
-        name: Type.String()
-    })
-], { unevaluatedProperties: false });
+export const botSchema = Type.Intersect(
+    [
+        clientSchema,
+        Type.Object({
+            owner_id: Type.Number(),
+            owner_name: Type.String(),
+            ai_dll: Type.String(),
+            handicap: Type.Number(),
+            side: Type.Number(),
+            name: Type.String(),
+        }),
+    ],
+    { unevaluatedProperties: false }
+);
 
 export const lobbySchema = Type.Object({
     bots: Type.Record(Type.String(), botSchema),
@@ -64,9 +79,15 @@ export const lobbySchema = Type.Object({
     map_name: Type.String(),
     max_players: Type.Number(),
     name: Type.String(),
-    password: Type.Union([Type.String(), Type.Null()]),
+    password: Type.Union([
+        Type.String(),
+        Type.Null(),
+    ]),
     players: Type.Array(Type.Number()),
-    started_at: Type.Union([Type.Number(), Type.Null()]),
+    started_at: Type.Union([
+        Type.Number(),
+        Type.Null(),
+    ]),
     tags: Type.Record(Type.String(), Type.String()),
     type: Type.String(),
     start_rectangles: Type.Record(Type.Number(), Type.Array(Type.Number())),
@@ -76,7 +97,7 @@ export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
     "s.system.server_event": Type.Object({
         event: Type.String(),
-        node: Type.String()
+        node: Type.String(),
     }),
     "s.system.pong": Type.Object({
         time: Type.Number(),
@@ -88,7 +109,7 @@ export const responses = {
     "s.auth.get_token": Type.Object({
         result: Type.String(),
         token: Type.Optional(Type.String()),
-        reason: Type.Optional(Type.String())
+        reason: Type.Optional(Type.String()),
     }),
     "s.auth.login": Type.Object({
         result: Type.String(),
@@ -99,18 +120,21 @@ export const responses = {
     "s.auth.verify": Type.Object({
         result: Type.String(),
         user: Type.Optional(myUserSchema),
-        reason: Type.Optional(Type.String())
+        reason: Type.Optional(Type.String()),
     }),
     "s.lobby.query": Type.Object({
         result: Type.String(),
-        lobbies: Type.Array(lobbySchema)
+        lobbies: Type.Array(lobbySchema),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
         users: Type.Array(userSchema),
     }),
     "s.lobby.join": Type.Object({
-        result: Type.Union([Type.Literal("waiting_for_host"), Type.Literal("failure")]),
+        result: Type.Union([
+            Type.Literal("waiting_for_host"),
+            Type.Literal("failure"),
+        ]),
         reason: Type.Optional(Type.String()),
     }),
     "s.lobby_host.request_to_join": Type.Object({
@@ -132,7 +156,7 @@ export const responses = {
         sender: Type.Number(),
     }),
     "s.lobby.updated": Type.Object({
-        lobby: lobbySchema
+        lobby: lobbySchema,
     }),
     "s.lobby.create": Type.Union([
         Type.Object({
@@ -148,5 +172,5 @@ export const responses = {
         lobby_id: Type.Number(),
         sender: Type.Number(),
         message: Type.String(),
-    })
+    }),
 } as const;

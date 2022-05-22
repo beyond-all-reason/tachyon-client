@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Static } from "@sinclair/typebox";
 import Ajv, { ValidateFunction } from "ajv/dist/2020";
-import { Signal, SignalBinding, objectKeys } from "jaz-ts-utils";
+import { objectKeys, Signal, SignalBinding } from "jaz-ts-utils";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
@@ -178,7 +178,11 @@ export class TachyonClient {
         });
     }
 
-    public async request<K extends RequestKey |(string & { key?: any }), Data extends (K extends RequestKey ? RequestType<K> : Record<string, unknown>)>(requestKey: K, data: Data, responseKey?: string) : Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>> {
+    public async request<K extends RequestKey | (string & { key?: any }), Data extends K extends RequestKey ? RequestType<K> : Record<string, unknown>>(
+        requestKey: K,
+        data: Data,
+        responseKey?: string
+    ): Promise<K extends RequestKey ? RequestResponseType<K> : Record<string, unknown>> {
         if (!responseKey) {
             responseKey = requestResponseMap[requestKey as keyof typeof requestResponseMap];
         }
@@ -218,9 +222,9 @@ export class TachyonClient {
     }
 
     // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
-    public onRequest<K extends RequestKey>(requestKey: K) : Signal<RequestType<K>>;
-    public onRequest<K extends string>(requestKey: K) : Signal<Record<string, unknown>>;
-    public onRequest<K extends RequestKey | string>(requestKey: K) : Signal<Record<string, unknown>> {
+    public onRequest<K extends RequestKey>(requestKey: K): Signal<RequestType<K>>;
+    public onRequest<K extends string>(requestKey: K): Signal<Record<string, unknown>>;
+    public onRequest<K extends RequestKey | string>(requestKey: K): Signal<Record<string, unknown>> {
         let request = this.requestSignals.get(requestKey);
         if (!request) {
             request = new Signal();
@@ -231,9 +235,9 @@ export class TachyonClient {
     }
 
     // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
-    public onResponse<K extends ResponseKey>(responseKey: K) : Signal<ResponseType<K>>;
-    public onResponse<K extends string>(responseKey: K) : Signal<Record<string, unknown>>;
-    public onResponse<K extends ResponseKey | string>(responseKey: K) : Signal<Record<string, unknown>> {
+    public onResponse<K extends ResponseKey>(responseKey: K): Signal<ResponseType<K>>;
+    public onResponse<K extends string>(responseKey: K): Signal<Record<string, unknown>>;
+    public onResponse<K extends ResponseKey | string>(responseKey: K): Signal<Record<string, unknown>> {
         let response = this.responseSignals.get(responseKey);
         if (!response) {
             response = new Signal();

@@ -39,7 +39,10 @@ export const requests = {
     "c.lobby_host.respond_to_join_request": Type.Object({
         userid: Type.Number(),
         response: Type.String(),
-        reason: Type.Union([Type.Literal("approve"), Type.Literal("reject")]),
+        reason: Type.Union([
+            Type.Literal("approve"),
+            Type.Literal("reject"),
+        ]),
     }),
     "c.lobby.leave": Type.Object({}),
     "c.lobby.create": Type.Object({
@@ -56,5 +59,5 @@ export const requests = {
         settings: Type.Object({
             max_players: Type.Number(),
         }),
-    })
+    }),
 } as const;

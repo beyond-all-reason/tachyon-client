@@ -1,29 +1,15 @@
 {
+    "extends": "./node_modules/jaz-ts-utils/tsconfig.json",
     "compilerOptions": {
-        "outDir": "dist",
-        "declaration": true,
-        "target": "es2019",
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "sourceMap": true,
-        "module": "CommonJS",
-        "moduleResolution": "node",
-        "lib": ["es2019"],
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
         "baseUrl": ".",
-        "allowJs": true,
-        "checkJs": false,
-        "paths": {
-            "~/*": ["src/*"]
-        },
-        "plugins": [{ "transform": "@zerollup/ts-transform-paths" }]
+        "outDir": "./dist",
     },
     "include": [
         "src/**/*",
     ],
     "exclude": [
         "node_modules",
+        "dist",
+        "working-files"
     ]
 }

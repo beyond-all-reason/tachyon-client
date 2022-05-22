@@ -8,8 +8,10 @@
     "prepublish": "npm run build",
     "build": "ttsc",
     "dev": "ttsc --watch",
-    "lint": "eslint . --ext .ts",
-    "lint-fix": "eslint . --ext .ts --fix",
+    "lint-check": "eslint . --ext .ts,.vue",
+    "lint": "eslint . --ext .ts,.vue --fix",
+    "format-check": "prettier --check src/**/*.{ts,vue,scss,json}",
+    "format": "prettier --write src/**/*.{ts,vue,scss,json}",
     "test": "jest --passWithNoTests"
   },
   "repository": {
@@ -20,7 +22,7 @@
   "license": "mit",
   "dependencies": {
     "ajv": "^8.11.0",
-    "jaz-ts-utils": "^3.7.2",
+    "jaz-ts-utils": "^4.1.6",
     "type-fest": "^2.12.2"
   },
   "devDependencies": {
