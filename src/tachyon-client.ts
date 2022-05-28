@@ -82,9 +82,6 @@ export class TachyonClient {
                 return;
             }
 
-            this.requestSignals = new Map();
-            this.responseSignals = new Map();
-
             this.socket = tls.connect(this.config);
 
             let chunk = "";
@@ -221,7 +218,6 @@ export class TachyonClient {
         });
     }
 
-    // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
     public onRequest<K extends RequestKey>(requestKey: K): Signal<RequestType<K>>;
     public onRequest<K extends string>(requestKey: K): Signal<Record<string, unknown>>;
     public onRequest<K extends RequestKey | string>(requestKey: K): Signal<Record<string, unknown>> {
@@ -234,7 +230,6 @@ export class TachyonClient {
         return request;
     }
 
-    // @ts-ignore-error Type instantiation is excessively deep and possibly infinite
     public onResponse<K extends ResponseKey>(responseKey: K): Signal<ResponseType<K>>;
     public onResponse<K extends string>(responseKey: K): Signal<Record<string, unknown>>;
     public onResponse<K extends ResponseKey | string>(responseKey: K): Signal<Record<string, unknown>> {
