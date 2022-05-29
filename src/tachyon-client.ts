@@ -120,7 +120,7 @@ export class TachyonClient {
                         reject(command);
                     }
                 } catch (err) {
-                    console.error("Error parsing tachyon response");
+                    console.debug("Tachyon response handling error");
                     throw err;
                 }
             });
@@ -142,6 +142,7 @@ export class TachyonClient {
 
             this.onClose.add(() => {
                 this.loggedIn = false;
+                this.connected = false;
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
@@ -247,7 +248,7 @@ export class TachyonClient {
     }
 
     public isConnected() {
-        return this.connected;
+        return this.socket?.readable && this.connected;
     }
 
     protected rawRequest(request: Record<string, unknown>) {
