@@ -42,7 +42,6 @@ export class TachyonClient {
     protected responseSignals: Map<string, Signal<Record<string, unknown>>> = new Map();
     protected requestClosedBinding?: SignalBinding;
     protected loggedIn = false;
-    protected connected = false;
     protected ajv: Ajv;
     protected requestValidators: { [key in RequestKey]?: ValidateFunction } = {};
     protected responseValidators: { [key in ResponseKey]?: ValidateFunction } = {};
@@ -129,7 +128,6 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     this.config.logMethod(`connected to ${this.config.host}:${this.config.port}`);
                 }
-                this.connected = true;
                 this.startPingInterval();
                 resolve();
             });
@@ -142,7 +140,6 @@ export class TachyonClient {
 
             this.onClose.add(() => {
                 this.loggedIn = false;
-                this.connected = false;
                 this.stopPingInterval();
                 this.socket?.destroy();
                 if (this.config.verbose) {
@@ -248,7 +245,7 @@ export class TachyonClient {
     }
 
     public isConnected() {
-        return this.socket?.readable && this.connected;
+        return this.socket?.readable;
     }
 
     protected rawRequest(request: Record<string, unknown>) {
