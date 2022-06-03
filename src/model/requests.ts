@@ -1,5 +1,7 @@
 import { Type } from "@sinclair/typebox";
 
+import { baseClientSchema, playerSpecificSchema } from "~/model/common";
+
 export const requests = {
     "c.auth.disconnect": Type.Object({}),
     "c.system.ping": Type.Object({}),
@@ -59,5 +61,14 @@ export const requests = {
         settings: Type.Object({
             max_players: Type.Number(),
         }),
+    }),
+    "c.lobby.update_status": Type.Object({
+        client: Type.Intersect(
+            [
+                Type.Partial(baseClientSchema),
+                Type.Partial(playerSpecificSchema),
+            ],
+            { unevaluatedProperties: false }
+        ),
     }),
 } as const;
