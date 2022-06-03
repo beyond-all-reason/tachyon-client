@@ -79,10 +79,7 @@ export const lobbySchema = Type.Object({
     map_name: Type.String(),
     max_players: Type.Number(),
     name: Type.String(),
-    password: Type.Union([
-        Type.String(),
-        Type.Null(),
-    ]),
+    password: Type.Boolean(),
     players: Type.Array(Type.Number()),
     started_at: Type.Union([
         Type.Number(),
@@ -153,7 +150,7 @@ export const responses = {
     "s.lobby.announce": Type.Object({
         lobby_id: Type.Number(),
         message: Type.String(),
-        sender: Type.Number(),
+        sender_id: Type.Number(),
     }),
     "s.lobby.updated": Type.Object({
         lobby: lobbySchema,
@@ -172,5 +169,10 @@ export const responses = {
         lobby_id: Type.Number(),
         sender: Type.Number(),
         message: Type.String(),
+    }),
+    "s.lobby.updated_client_battlestatus": Type.Object({
+        client: playerSchema,
+        lobby_id: Type.Number(),
+        reason: Type.String(),
     }),
 } as const;
