@@ -75,6 +75,7 @@ export const lobbySchema = Type.Object({
     engine_name: Type.String(),
     engine_version: Type.String(),
     founder_id: Type.Number(),
+    game_name: Type.String(),
     id: Type.Number(),
     in_progress: Type.Boolean(),
     ip: Type.String(),
