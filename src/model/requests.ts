@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 
-import { baseClientSchema, playerSpecificSchema } from "~/model/common";
+import { baseClientSchema } from "~/model/common";
 
 export const requests = {
     "c.auth.disconnect": Type.Object({}),
@@ -63,13 +63,7 @@ export const requests = {
         }),
     }),
     "c.lobby.update_status": Type.Object({
-        client: Type.Intersect(
-            [
-                Type.Partial(baseClientSchema),
-                Type.Partial(playerSpecificSchema),
-            ],
-            { unevaluatedProperties: false }
-        ),
+        client: Type.Partial(baseClientSchema),
     }),
     "c.lobby.say": Type.Object({
         message: Type.String(),
