@@ -79,7 +79,7 @@ export const responses = {
     ]),
     "s.lobby.say": Type.Object({
         lobby_id: Type.Number(),
-        sender: Type.Number(),
+        sender_id: Type.Number(),
         message: Type.String(),
     }),
     "s.lobby.updated_client_battlestatus": Type.Object({

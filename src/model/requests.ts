@@ -71,4 +71,7 @@ export const requests = {
             { unevaluatedProperties: false }
         ),
     }),
+    "c.lobby.say": Type.Object({
+        message: Type.String(),
+    }),
 } as const;
