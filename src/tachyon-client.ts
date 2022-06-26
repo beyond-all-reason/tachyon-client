@@ -2,6 +2,7 @@
 import { Static } from "@sinclair/typebox";
 import Ajv, { ValidateFunction } from "ajv/dist/2020";
 import { objectKeys, Signal, SignalBinding } from "jaz-ts-utils";
+import { clearInterval, setInterval } from "timers";
 import * as tls from "tls";
 import { SetOptional } from "type-fest";
 import * as gzip from "zlib";
@@ -17,12 +18,16 @@ export interface TachyonClientOptions extends tls.ConnectionOptions {
     verbose: boolean;
     pingIntervalMs: number;
     logMethod: (message?: any, ...optionalParams: any[]) => void;
+    attemptReconnect: boolean;
+    attemptReconnectIntervalMs: number;
 }
 
 export const defaultTachyonClientOptions = {
     verbose: true,
     pingIntervalMs: 30000,
     logMethod: console.log,
+    attemptReconnect: true,
+    attemptReconnectIntervalMs: 1000,
 };
 
 export type RequestKey = keyof typeof requests;
@@ -35,6 +40,7 @@ export type RequestResponseType<K extends RequestKey> = RequestResponseKey<K> ex
 export class TachyonClient {
     public config: TachyonClientOptions;
     public socket?: tls.TLSSocket;
+    public onConnect = new Signal();
     public onClose = new Signal<void>();
 
     protected pingIntervalId?: NodeJS.Timeout;
@@ -45,6 +51,7 @@ export class TachyonClient {
     protected ajv: Ajv;
     protected requestValidators: { [key in RequestKey]?: ValidateFunction } = {};
     protected responseValidators: { [key in ResponseKey]?: ValidateFunction } = {};
+    protected reconnectIntervalId?: NodeJS.Timeout;
 
     constructor(options: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
         this.config = Object.assign({}, defaultTachyonClientOptions, options);
@@ -81,10 +88,14 @@ export class TachyonClient {
                 return;
             }
 
+            this.onClose.disposeAll();
+            if (this.reconnectIntervalId) {
+                clearInterval(this.reconnectIntervalId);
+            }
+
             this.socket = tls.connect(this.config);
 
             let chunk = "";
-
             this.socket.on("data", (dataBuffer: Buffer) => {
                 try {
                     const data = dataBuffer.toString("utf8");
@@ -128,11 +139,10 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     this.config.logMethod(`connected to ${this.config.host}:${this.config.port}`);
                 }
+                this.onConnect.dispatch();
                 this.startPingInterval();
                 resolve();
             });
-
-            this.onClose.disposeAll();
 
             this.socket.on("close", () => {
                 this.onClose.dispatch();
@@ -145,6 +155,13 @@ export class TachyonClient {
                 if (this.config.verbose) {
                     this.config.logMethod(`disconnected from ${this.config.host}:${this.config.port}`);
                 }
+
+                if (this.config.attemptReconnect) {
+                    this.reconnectIntervalId = setInterval(() => {
+                        this.connect();
+                    }, this.config.attemptReconnectIntervalMs);
+                }
+
                 reject(new ServerClosedError());
             });
 
