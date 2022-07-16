@@ -1,6 +1,6 @@
 import { Type } from "@sinclair/typebox";
 
-import { lobbySchema, myUserSchema, playerSchema, userSchema } from "~/model/common";
+import { botSchema, lobbySchema, myUserSchema, playerSchema, userSchema } from "~/model/common";
 
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
@@ -38,6 +38,8 @@ export const responses = {
                 lobby: lobbySchema,
             })
         ),
+        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),

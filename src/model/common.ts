@@ -76,7 +76,6 @@ export const botSchema = Type.Intersect(
 );
 
 export const lobbySchema = Type.Object({
-    bots: Type.Record(Type.String(), botSchema),
     disabled_units: Type.Array(Type.String()),
     engine_name: Type.String(),
     engine_version: Type.String(),
@@ -96,7 +95,6 @@ export const lobbySchema = Type.Object({
         Type.Number(),
         Type.Null(),
     ]),
-    tags: Type.Record(Type.String(), Type.String()),
     type: Type.String(),
     start_rectangles: Type.Record(Type.Number(), Type.Array(Type.Number())),
 });

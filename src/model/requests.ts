@@ -29,6 +29,7 @@ export const requests = {
             locked: Type.Optional(Type.Boolean()),
             in_progress: Type.Optional(Type.Boolean()),
         }),
+        fields: Type.Array(Type.String()),
     }),
     "c.user.list_users_from_ids": Type.Object({
         id_list: Type.Array(Type.Number()),
