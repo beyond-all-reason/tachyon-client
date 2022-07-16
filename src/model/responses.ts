@@ -33,7 +33,11 @@ export const responses = {
     }),
     "s.lobby.query": Type.Object({
         result: Type.String(),
-        lobbies: Type.Array(lobbySchema),
+        lobbies: Type.Array(
+            Type.Object({
+                lobby: lobbySchema,
+            })
+        ),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
