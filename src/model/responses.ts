@@ -36,10 +36,10 @@ export const responses = {
         lobbies: Type.Array(
             Type.Object({
                 lobby: lobbySchema,
+                bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+                modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
             })
         ),
-        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
@@ -59,6 +59,8 @@ export const responses = {
         Type.Object({
             result: Type.Literal("approve"),
             lobby: lobbySchema,
+            bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+            modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
         }),
         Type.Object({
             result: Type.Literal("reject"),
@@ -72,11 +74,15 @@ export const responses = {
     }),
     "s.lobby.updated": Type.Object({
         lobby: lobbySchema,
+        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
     }),
     "s.lobby.create": Type.Union([
         Type.Object({
             result: Type.Literal("success"),
             lobby: lobbySchema,
+            bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+            modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
         }),
         Type.Object({
             result: Type.Literal("failure"),
