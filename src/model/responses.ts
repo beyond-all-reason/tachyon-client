@@ -99,4 +99,7 @@ export const responses = {
         lobby_id: Type.Number(),
         reason: Type.String(),
     }),
+    "s.lobby.set_modoptions": Type.Object({
+        new_options: Type.Record(Type.String(), Type.String()),
+    }),
 } as const;
