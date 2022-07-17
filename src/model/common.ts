@@ -89,7 +89,7 @@ export const lobbySchema = Type.Object({
     map_name: Type.String(),
     max_players: Type.Number(),
     name: Type.String(),
-    password: Type.Boolean(),
+    passworded: Type.Boolean(),
     players: Type.Array(Type.Number()),
     started_at: Type.Union([
         Type.Number(),
