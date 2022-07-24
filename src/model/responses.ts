@@ -2,7 +2,7 @@ import { Type } from "@sinclair/typebox";
 
 import { botSchema, lobbySchema, myUserSchema, playerSchema, userSchema } from "~/model/common";
 
-export const battleResponse = Type.Object({
+export const battleSchema = Type.Object({
     lobby: lobbySchema,
     bots: Type.Optional(Type.Record(Type.String(), botSchema)),
     modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
@@ -39,7 +39,7 @@ export const responses = {
     }),
     "s.lobby.query": Type.Object({
         result: Type.String(),
-        lobbies: Type.Array(Type.Object(battleResponse)),
+        lobbies: Type.Array(battleSchema),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
@@ -60,7 +60,7 @@ export const responses = {
             Type.Object({
                 result: Type.Literal("approve"),
             }),
-            battleResponse,
+            battleSchema,
         ]),
         Type.Object({
             result: Type.Literal("reject"),
@@ -72,13 +72,13 @@ export const responses = {
         message: Type.String(),
         sender_id: Type.Number(),
     }),
-    "s.lobby.updated": Type.Object(battleResponse),
+    "s.lobby.updated": battleSchema,
     "s.lobby.create": Type.Union([
         Type.Intersect([
             Type.Object({
                 result: Type.Literal("success"),
             }),
-            battleResponse,
+            battleSchema,
         ]),
         Type.Object({
             result: Type.Literal("failure"),
