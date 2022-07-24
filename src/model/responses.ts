@@ -2,6 +2,12 @@ import { Type } from "@sinclair/typebox";
 
 import { botSchema, lobbySchema, myUserSchema, playerSchema, userSchema } from "~/model/common";
 
+export const battleResponse = Type.Object({
+    lobby: lobbySchema,
+    bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+    modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
+});
+
 export const responses = {
     "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
     "s.system.server_event": Type.Object({
@@ -33,13 +39,7 @@ export const responses = {
     }),
     "s.lobby.query": Type.Object({
         result: Type.String(),
-        lobbies: Type.Array(
-            Type.Object({
-                lobby: lobbySchema,
-                bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-                modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-            })
-        ),
+        lobbies: Type.Array(Type.Object(battleResponse)),
     }),
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
@@ -56,12 +56,12 @@ export const responses = {
         userid: Type.Number(),
     }),
     "s.lobby.join_response": Type.Union([
-        Type.Object({
-            result: Type.Literal("approve"),
-            lobby: lobbySchema,
-            bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-            modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-        }),
+        Type.Intersect([
+            Type.Object({
+                result: Type.Literal("approve"),
+            }),
+            battleResponse,
+        ]),
         Type.Object({
             result: Type.Literal("reject"),
             reason: Type.String(),
@@ -72,18 +72,14 @@ export const responses = {
         message: Type.String(),
         sender_id: Type.Number(),
     }),
-    "s.lobby.updated": Type.Object({
-        lobby: lobbySchema,
-        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-    }),
+    "s.lobby.updated": Type.Object(battleResponse),
     "s.lobby.create": Type.Union([
-        Type.Object({
-            result: Type.Literal("success"),
-            lobby: lobbySchema,
-            bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-            modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-        }),
+        Type.Intersect([
+            Type.Object({
+                result: Type.Literal("success"),
+            }),
+            battleResponse,
+        ]),
         Type.Object({
             result: Type.Literal("failure"),
             reason: Type.String(),
