@@ -34,13 +34,11 @@ export const baseClientSchema = Type.Object({
     team_number: Type.Number(),
     player_number: Type.Number(),
     team_colour: Type.String(),
-    sync: Type.Array(
-        Type.Union([
-            Type.Literal("engine"),
-            Type.Literal("game"),
-            Type.Literal("map"),
-        ])
-    ),
+    sync: Type.Object({
+        engine: Type.Number(),
+        game: Type.Number(),
+        map: Type.Number(),
+    }),
 });
 
 export const playerSpecificSchema = Type.Object({
