@@ -113,4 +113,8 @@ export const responses = {
         lobby_id: Type.Number(),
         new_values: Type.Partial(lobbySchema),
     }),
+    "s.lobby.add_user": Type.Object({
+        joiner_id: Type.Number(),
+        lobby_id: Type.Number(),
+    }),
 } as const;
