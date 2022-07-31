@@ -14,4 +14,5 @@ export const requestResponseMap = shape({
     "c.lobby.query": "s.lobby.query",
     "c.user.list_users_from_ids": "s.user.user_and_client_list",
     "c.lobby.join": "s.lobby.join",
+    "c.lobby.leave": "s.lobby.leave",
 } as const);

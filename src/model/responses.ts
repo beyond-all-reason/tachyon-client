@@ -1,11 +1,12 @@
 import { Type } from "@sinclair/typebox";
 
-import { botSchema, lobbySchema, myUserSchema, playerSchema, userSchema } from "~/model/common";
+import { botSchema, lobbySchema, myUserSchema, playerSchema, playerSpecificSchema, userSchema } from "~/model/common";
 
 export const battleSchema = Type.Object({
     lobby: lobbySchema,
     bots: Type.Optional(Type.Record(Type.String(), botSchema)),
     modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
+    member_list: Type.Optional(Type.Array(playerSpecificSchema)),
 });
 
 export const responses = {
@@ -97,5 +98,19 @@ export const responses = {
     }),
     "s.lobby.set_modoptions": Type.Object({
         new_options: Type.Record(Type.String(), Type.String()),
+    }),
+    "s.lobby.remove_modoptions": Type.Object({
+        keys: Type.Array(Type.String()),
+    }),
+    "s.lobby.remove_user": Type.Object({
+        leaver_id: Type.Number(),
+        lobby_id: Type.Number(),
+    }),
+    "s.lobby.leave": Type.Object({
+        result: Type.Literal("success"),
+    }),
+    "s.lobby.update_values": Type.Object({
+        lobby_id: Type.Number(),
+        new_values: Type.Partial(lobbySchema),
     }),
 } as const;
