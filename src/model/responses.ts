@@ -120,16 +120,7 @@ export const responses = {
     "s.lobby.add_start_area": Type.Object({
         area_id: Type.Number(),
         lobby_id: Type.Number(),
-        structure: Type.Record(
-            Type.Number(),
-            Type.Tuple([
-                Type.Literal("rect"),
-                Type.Number(),
-                Type.Number(),
-                Type.Number(),
-                Type.Number(),
-            ])
-        ), // TODO: https://github.com/beyond-all-reason/teiserver/issues/45
+        structure: Type.Record(Type.Number(), Type.Array(Type.Any())), // TODO: https://github.com/beyond-all-reason/teiserver/issues/45
     }),
     "s.lobby.remove_start_area": Type.Object({
         area_id: Type.Number(),
