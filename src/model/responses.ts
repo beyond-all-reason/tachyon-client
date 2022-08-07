@@ -117,4 +117,13 @@ export const responses = {
         joiner_id: Type.Number(),
         lobby_id: Type.Number(),
     }),
+    "s.lobby.add_start_area": Type.Object({
+        area_id: Type.Number(),
+        lobby_id: Type.Number(),
+        structure: Type.Any(), // TODO: https://github.com/beyond-all-reason/teiserver/issues/45
+    }),
+    "s.lobby.remove_start_area": Type.Object({
+        area_id: Type.Number(),
+        lobby_id: Type.Number(),
+    }),
 } as const;

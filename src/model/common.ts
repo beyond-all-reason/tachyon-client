@@ -94,5 +94,6 @@ export const lobbySchema = Type.Object({
         Type.Null(),
     ]),
     type: Type.String(),
-    start_rectangles: Type.Record(Type.Number(), Type.Array(Type.Number())),
+    // TODO: https://github.com/beyond-all-reason/teiserver/issues/45
+    start_rectangles: Type.Any(),
 });
