@@ -46,6 +46,15 @@ export const playerSpecificSchema = Type.Object({
     lobby_id: Type.Number(),
     away: Type.Boolean(),
     in_game: Type.Boolean(),
+    clan_tag: Type.Union([
+        Type.String(),
+        Type.Null(),
+    ]),
+    party_id: Type.Union([
+        Type.String(),
+        Type.Null(),
+    ]),
+    muted: Type.Boolean(),
 });
 
 export const botSpecificSchema = Type.Object({
