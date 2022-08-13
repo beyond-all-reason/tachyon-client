@@ -126,4 +126,11 @@ export const responses = {
         area_id: Type.Number(),
         lobby_id: Type.Number(),
     }),
+    "s.communication.send_direct_message": Type.Object({
+        result: Type.String(),
+    }),
+    "s.communication.received_direct_message": Type.Object({
+        sender_id: Type.Number(),
+        message: Type.String(),
+    }),
 } as const;

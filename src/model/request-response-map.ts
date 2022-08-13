@@ -15,4 +15,5 @@ export const requestResponseMap = shape({
     "c.user.list_users_from_ids": "s.user.user_and_client_list",
     "c.lobby.join": "s.lobby.join",
     "c.lobby.leave": "s.lobby.leave",
+    "c.communication.send_direct_message": "s.communication.send_direct_message",
 } as const);

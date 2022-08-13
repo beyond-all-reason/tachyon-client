@@ -69,4 +69,8 @@ export const requests = {
     "c.lobby.say": Type.Object({
         message: Type.String(),
     }),
+    "c.communication.send_direct_message": Type.Object({
+        recipient_id: Type.Number(),
+        message: Type.String(),
+    }),
 } as const;
