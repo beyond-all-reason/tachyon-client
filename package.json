@@ -1,6 +1,6 @@
 {
   "name": "tachyon-client",
-  "version": "3.9.21",
+  "version": "3.9.22",
   "description": "Client API for interfacing with Beyond All Reason's Teiserver via the Tachyon protocol",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
