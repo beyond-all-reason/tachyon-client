@@ -66,7 +66,7 @@ export const requests = {
     "c.lobby.update_status": Type.Object({
         client: Type.Partial(baseClientSchema),
     }),
-    "c.lobby.say": Type.Object({
+    "c.lobby.message": Type.Object({
         message: Type.String(),
     }),
     "c.communication.send_direct_message": Type.Object({
