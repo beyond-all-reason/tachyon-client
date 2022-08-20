@@ -10,7 +10,9 @@ export const battleSchema = Type.Object({
 });
 
 export const responses = {
-    "s.auth.disconnect": Type.Object({}), // this doesn't actually exist but keeping it here to simplify typings
+    /**
+     * system
+     */
     "s.system.server_event": Type.Object({
         event: Type.String(),
         node: Type.String(),
@@ -18,6 +20,9 @@ export const responses = {
     "s.system.pong": Type.Object({
         time: Type.Number(),
     }),
+    /**
+     * auth
+     */
     "s.auth.register": Type.Object({
         result: Type.String(),
         reason: Type.Optional(Type.String()),
@@ -38,13 +43,20 @@ export const responses = {
         user: Type.Optional(myUserSchema),
         reason: Type.Optional(Type.String()),
     }),
-    "s.lobby.query": Type.Object({
-        result: Type.String(),
-        lobbies: Type.Array(battleSchema),
-    }),
+    "s.auth.disconnect": Type.Object({}), // this doesn't actually exist as a response but keeping it here to simplify typings
+    /**
+     * User
+     */
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
         users: Type.Array(userSchema),
+    }),
+    /**
+     * lobby
+     */
+    "s.lobby.query": Type.Object({
+        result: Type.String(),
+        lobbies: Type.Array(battleSchema),
     }),
     "s.lobby.join": Type.Object({
         result: Type.Union([
@@ -130,6 +142,9 @@ export const responses = {
         area_id: Type.Number(),
         lobby_id: Type.Number(),
     }),
+    /**
+     * communication
+     */
     "s.communication.send_direct_message": Type.Object({
         result: Type.String(),
     }),

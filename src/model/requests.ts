@@ -3,8 +3,13 @@ import { Type } from "@sinclair/typebox";
 import { baseClientSchema } from "~/model/common";
 
 export const requests = {
-    "c.auth.disconnect": Type.Object({}),
+    /**
+     * system
+     */
     "c.system.ping": Type.Object({}),
+    /**
+     * auth
+     */
     "c.auth.register": Type.Object({
         username: Type.String(),
         email: Type.String(),
@@ -24,6 +29,10 @@ export const requests = {
         token: Type.String(),
         code: Type.String(),
     }),
+    "c.auth.disconnect": Type.Object({}),
+    /**
+     * lobby
+     */
     "c.lobby.query": Type.Object({
         query: Type.Object({
             locked: Type.Optional(Type.Boolean()),
@@ -69,6 +78,9 @@ export const requests = {
     "c.lobby.message": Type.Object({
         message: Type.String(),
     }),
+    /**
+     * communication
+     */
     "c.communication.send_direct_message": Type.Object({
         recipient_id: Type.Number(),
         message: Type.String(),
