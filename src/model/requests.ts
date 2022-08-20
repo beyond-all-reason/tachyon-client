@@ -78,6 +78,30 @@ export const requests = {
     "c.lobby.message": Type.Object({
         message: Type.String(),
     }),
+    "c.lobby.add_bot": Type.Object({
+        name: Type.String(),
+        ai_dll: Type.String(),
+        status: Type.Object({
+            // TODO: needs to be more DRY
+            player_number: Type.Number(),
+            team_number: Type.Number(),
+            team_color: Type.String(),
+            side: Type.Number(),
+        }),
+    }),
+    "c.lobby.update_bot": Type.Object({
+        name: Type.String(),
+        status: Type.Object({
+            // TODO: needs to be more DRY
+            player_number: Type.Number(),
+            team_number: Type.Number(),
+            team_color: Type.String(),
+            side: Type.Number(),
+        }),
+    }),
+    "c.lobby.remove_bot": Type.Object({
+        name: Type.String(),
+    }),
     /**
      * communication
      */

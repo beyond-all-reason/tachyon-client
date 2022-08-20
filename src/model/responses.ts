@@ -142,6 +142,15 @@ export const responses = {
         area_id: Type.Number(),
         lobby_id: Type.Number(),
     }),
+    "s.lobby.add_bot": Type.Object({
+        bot: botSchema,
+    }),
+    "s.lobby.update_bot": Type.Object({
+        bot: botSchema,
+    }),
+    "s.lobby.remove_bot": Type.Object({
+        name: Type.String(),
+    }),
     /**
      * communication
      */
