@@ -80,6 +80,12 @@ export const responses = {
             reason: Type.String(),
         }),
     ]),
+    "s.lobby.force_join": Type.Intersect([
+        Type.Object({
+            script_password: Type.String(),
+        }),
+        battleSchema,
+    ]),
     "s.lobby.announce": Type.Object({
         lobby_id: Type.Number(),
         message: Type.String(),
