@@ -7,6 +7,7 @@ export const battleSchema = Type.Object({
     bots: Type.Optional(Type.Record(Type.String(), botSchema)),
     modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
     member_list: Type.Optional(Type.Array(playerSpecificSchema)),
+    script_password: Type.Optional(Type.String()),
 });
 
 export const responses = {
@@ -80,12 +81,7 @@ export const responses = {
             reason: Type.String(),
         }),
     ]),
-    "s.lobby.force_join": Type.Intersect([
-        Type.Object({
-            script_password: Type.String(),
-        }),
-        battleSchema,
-    ]),
+    "s.lobby.force_join": battleSchema,
     "s.lobby.announce": Type.Object({
         lobby_id: Type.Number(),
         message: Type.String(),
