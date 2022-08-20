@@ -113,6 +113,7 @@ export const responses = {
         new_options: Type.Record(Type.String(), Type.String()),
     }),
     "s.lobby.remove_modoptions": Type.Object({
+        lobby_id: Type.Number(),
         keys: Type.Array(Type.String()),
     }),
     "s.lobby.remove_user": Type.Object({
