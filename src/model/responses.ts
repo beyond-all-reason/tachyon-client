@@ -97,6 +97,7 @@ export const responses = {
         reason: Type.String(),
     }),
     "s.lobby.set_modoptions": Type.Object({
+        lobby_id: Type.Number(),
         new_options: Type.Record(Type.String(), Type.String()),
     }),
     "s.lobby.remove_modoptions": Type.Object({
@@ -115,6 +116,9 @@ export const responses = {
     }),
     "s.lobby.add_user": Type.Object({
         joiner_id: Type.Number(),
+        lobby_id: Type.Number(),
+    }),
+    "s.lobby.closed": Type.Object({
         lobby_id: Type.Number(),
     }),
     "s.lobby.add_start_area": Type.Object({
