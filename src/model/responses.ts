@@ -2,13 +2,16 @@ import { Type } from "@sinclair/typebox";
 
 import { botSchema, lobbySchema, myUserSchema, playerSchema, playerSpecificSchema, userSchema } from "~/model/common";
 
-export const battleSchema = Type.Object({
-    lobby: lobbySchema,
-    bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-    modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-    member_list: Type.Optional(Type.Array(playerSpecificSchema)),
-    script_password: Type.Optional(Type.String()),
-});
+export const battleSchema = Type.Object(
+    {
+        lobby: lobbySchema,
+        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
+        member_list: Type.Optional(Type.Array(playerSpecificSchema)),
+        script_password: Type.Optional(Type.String()),
+    },
+    { additionalProperties: false }
+);
 
 export const responses = {
     /**
@@ -71,9 +74,12 @@ export const responses = {
     }),
     "s.lobby.join_response": Type.Union([
         Type.Intersect([
-            Type.Object({
-                result: Type.Literal("approve"),
-            }),
+            Type.Object(
+                {
+                    result: Type.Literal("approve"),
+                },
+                { additionalProperties: false }
+            ),
             battleSchema,
         ]),
         Type.Object({
@@ -90,9 +96,12 @@ export const responses = {
     "s.lobby.updated": battleSchema,
     "s.lobby.create": Type.Union([
         Type.Intersect([
-            Type.Object({
-                result: Type.Literal("success"),
-            }),
+            Type.Object(
+                {
+                    result: Type.Literal("success"),
+                },
+                { additionalProperties: false }
+            ),
             battleSchema,
         ]),
         Type.Object({

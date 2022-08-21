@@ -63,6 +63,7 @@ export class TachyonClient {
         this.ajv = new Ajv({ allErrors: true });
         this.ajv.addKeyword("kind");
         this.ajv.addKeyword("modifier");
+
         objectKeys(requests).forEach((key) => {
             const requestSchema = requests[key];
             if (requestSchema.type === "object") {
