@@ -74,12 +74,9 @@ export const responses = {
     }),
     "s.lobby.join_response": Type.Union([
         Type.Intersect([
-            Type.Object(
-                {
-                    result: Type.Literal("approve"),
-                },
-                { additionalProperties: false }
-            ),
+            Type.Object({
+                result: Type.Literal("approve"),
+            }),
             battleSchema,
         ]),
         Type.Object({
@@ -96,12 +93,9 @@ export const responses = {
     "s.lobby.updated": battleSchema,
     "s.lobby.create": Type.Union([
         Type.Intersect([
-            Type.Object(
-                {
-                    result: Type.Literal("success"),
-                },
-                { additionalProperties: false }
-            ),
+            Type.Object({
+                result: Type.Literal("success"),
+            }),
             battleSchema,
         ]),
         Type.Object({
