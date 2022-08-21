@@ -2,16 +2,13 @@ import { Type } from "@sinclair/typebox";
 
 import { botSchema, lobbySchema, myUserSchema, playerSchema, playerSpecificSchema, userSchema } from "~/model/common";
 
-export const battleSchema = Type.Object(
-    {
-        lobby: lobbySchema,
-        bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-        modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
-        member_list: Type.Optional(Type.Array(playerSpecificSchema)),
-        script_password: Type.Optional(Type.String()),
-    },
-    { additionalProperties: false }
-);
+export const battleSchema = Type.Object({
+    lobby: lobbySchema,
+    bots: Type.Optional(Type.Record(Type.String(), botSchema)),
+    modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
+    member_list: Type.Optional(Type.Array(playerSpecificSchema)),
+    script_password: Type.Optional(Type.String()),
+});
 
 export const responses = {
     /**
