@@ -107,6 +107,7 @@ export const lobbySchema = Type.Object(
         id: Type.Number(),
         in_progress: Type.Boolean(),
         ip: Type.String(),
+        port: Type.Number(),
         locked: Type.Boolean(),
         map_hash: Type.String(),
         map_name: Type.String(),
