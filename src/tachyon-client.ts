@@ -16,7 +16,6 @@ export interface TachyonClientOptions extends tls.ConnectionOptions {
     host: string;
     port: number;
     verbose: boolean;
-    pingIntervalEnabled: boolean;
     pingIntervalMs: number;
     logMethod: (message?: any, ...optionalParams: any[]) => void;
     attemptReconnect: boolean;
@@ -25,7 +24,6 @@ export interface TachyonClientOptions extends tls.ConnectionOptions {
 
 export const defaultTachyonClientOptions = {
     verbose: true,
-    pingIntervalEnabled: false,
     pingIntervalMs: 30000,
     logMethod: console.log,
     attemptReconnect: true,
@@ -281,20 +279,12 @@ export class TachyonClient {
     }
 
     protected startPingInterval() {
-        if (!this.config.pingIntervalEnabled) {
-            return;
-        }
-
         this.pingIntervalId = setInterval(() => {
             this.request("c.system.ping", {});
         }, this.config.pingIntervalMs);
     }
 
     protected stopPingInterval() {
-        if (!this.config.pingIntervalEnabled) {
-            return;
-        }
-
         if (this.pingIntervalId) {
             clearInterval(this.pingIntervalId);
         }

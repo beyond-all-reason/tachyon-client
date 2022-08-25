@@ -166,6 +166,10 @@ export const responses = {
     "s.lobby.remove_bot": Type.Object({
         name: Type.String(),
     }),
+    "s.lobby.received_lobby_direct_announce": Type.Object({
+        message: Type.String(),
+        sender_id: Type.Number(),
+    }),
     /**
      * communication
      */
