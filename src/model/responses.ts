@@ -21,6 +21,18 @@ export const responses = {
     "s.system.pong": Type.Object({
         time: Type.Number(),
     }),
+    "s.system.watch": Type.Object({
+        channel: Type.String(),
+        result: Type.String(),
+    }),
+    "s.system.server_stats": Type.Object({
+        data: Type.Object({
+            in_progress_lobby_count: Type.Number(),
+            lobby_count: Type.Number(),
+            player_count: Type.Number(),
+            user_count: Type.Number(),
+        }),
+    }),
     /**
      * auth
      */

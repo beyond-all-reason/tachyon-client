@@ -7,6 +7,9 @@ export const requests = {
      * system
      */
     "c.system.ping": Type.Object({}),
+    "c.system.watch": Type.Object({
+        channel: Type.String(),
+    }),
     /**
      * auth
      */
