@@ -144,6 +144,8 @@ export const responses = {
     "s.lobby.add_user": Type.Object({
         joiner_id: Type.Number(),
         lobby_id: Type.Number(),
+        user: userSchema,
+        client: playerSchema,
     }),
     "s.lobby.closed": Type.Object({
         lobby_id: Type.Number(),
