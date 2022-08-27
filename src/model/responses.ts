@@ -153,7 +153,13 @@ export const responses = {
     "s.lobby.add_start_area": Type.Object({
         area_id: Type.Number(),
         lobby_id: Type.Number(),
-        structure: Type.Record(Type.Number(), Type.Array(Type.Any())), // TODO: https://github.com/beyond-all-reason/teiserver/issues/45
+        structure: Type.Object({
+            shape: Type.String(),
+            x1: Type.Number(),
+            y1: Type.Number(),
+            x2: Type.Number(),
+            y2: Type.Number(),
+        }),
     }),
     "s.lobby.remove_start_area": Type.Object({
         area_id: Type.Number(),
