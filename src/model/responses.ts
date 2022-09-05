@@ -172,7 +172,7 @@ export const responses = {
         bot: botSchema,
     }),
     "s.lobby.remove_bot": Type.Object({
-        name: Type.String(),
+        bot_name: Type.String(),
     }),
     "s.lobby.received_lobby_direct_announce": Type.Object({
         message: Type.String(),
