@@ -191,6 +191,14 @@ export class TachyonClient {
         });
     }
 
+    public async disconnect() {
+        return new Promise<void>((resolve) => {
+            this.socket?.end(() => {
+                resolve();
+            });
+        });
+    }
+
     public async request<K extends RequestKey | (string & { key?: any }), Data extends K extends RequestKey ? RequestType<K> : Record<string, unknown>>(
         requestKey: K,
         data: Data,
