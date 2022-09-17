@@ -192,11 +192,7 @@ export class TachyonClient {
     }
 
     public async disconnect() {
-        return new Promise<void>((resolve) => {
-            this.socket?.end(() => {
-                resolve();
-            });
-        });
+        this.socket?.destroy();
     }
 
     public async request<K extends RequestKey | (string & { key?: any }), Data extends K extends RequestKey ? RequestType<K> : Record<string, unknown>>(
@@ -268,10 +264,6 @@ export class TachyonClient {
 
     public isLoggedIn() {
         return this.loggedIn;
-    }
-
-    public isConnected() {
-        return this.socket?.readable;
     }
 
     protected rawRequest(request: Record<string, unknown>) {
