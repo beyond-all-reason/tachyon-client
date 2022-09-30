@@ -81,18 +81,7 @@ export const responses = {
     "s.lobby_host.request_to_join": Type.Object({
         userid: Type.Number(),
     }),
-    "s.lobby.join_response": Type.Union([
-        Type.Intersect([
-            Type.Object({
-                result: Type.Literal("approve"),
-            }),
-            battleSchema,
-        ]),
-        Type.Object({
-            result: Type.Literal("reject"),
-            reason: Type.String(),
-        }),
-    ]),
+    "s.lobby.joined": battleSchema,
     "s.lobby.force_join": battleSchema,
     "s.lobby.announce": Type.Object({
         lobby_id: Type.Number(),
