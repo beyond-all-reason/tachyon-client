@@ -82,7 +82,6 @@ export const responses = {
         userid: Type.Number(),
     }),
     "s.lobby.joined": battleSchema,
-    "s.lobby.force_join": battleSchema,
     "s.lobby.announce": Type.Object({
         lobby_id: Type.Number(),
         message: Type.String(),
