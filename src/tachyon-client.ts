@@ -36,6 +36,7 @@ export type RequestType<K extends RequestKey> = Static<typeof requests[K]>;
 export type ResponseType<K extends ResponseKey> = Static<typeof responses[K]>;
 export type RequestResponseKey<K extends RequestKey> = K extends keyof typeof requestResponseMap ? typeof requestResponseMap[K] : never;
 export type RequestResponseType<K extends RequestKey> = RequestResponseKey<K> extends never ? never : ResponseType<RequestResponseKey<K>>;
+export type ResponseKeyNoData = { [K in keyof typeof requests]-?: Static<typeof requests[K]> extends void ? K : never }[keyof typeof requests];
 
 export class TachyonClient {
     public config: TachyonClientOptions;
@@ -66,19 +67,23 @@ export class TachyonClient {
 
         objectKeys(requests).forEach((key) => {
             const requestSchema = requests[key];
-            if (requestSchema.type === "object") {
-                requestSchema.additionalProperties = false;
+            if (requestSchema.type !== "void") {
+                if (requestSchema.type === "object") {
+                    requestSchema.additionalProperties = false;
+                }
+                const validator = this.ajv.compile(requestSchema);
+                this.requestValidators[key] = validator;
             }
-            const validator = this.ajv.compile(requestSchema);
-            this.requestValidators[key] = validator;
         });
         objectKeys(responses).forEach((key) => {
             const responseSchema = responses[key];
-            if (responseSchema.type === "object") {
-                responseSchema.additionalProperties = false;
+            if (responseSchema.type !== "void") {
+                if (responseSchema.type === "object") {
+                    responseSchema.additionalProperties = false;
+                }
+                const validator = this.ajv.compile(responseSchema);
+                this.responseValidators[key] = validator;
             }
-            const validator = this.ajv.compile(responseSchema);
-            this.responseValidators[key] = validator;
         });
     }
 
@@ -116,7 +121,7 @@ export class TachyonClient {
 
                     const { cmd: responseKey, ...responseData } = command;
 
-                    if (responseKey in responses) {
+                    if (responseKey in responses && responseData) {
                         this.validateResponse(responseKey, responseData);
                     } else {
                         console.warn(`No response handler for ${responseKey}`);
@@ -195,6 +200,8 @@ export class TachyonClient {
         this.socket?.destroy();
     }
 
+    public async request<K extends RequestKey, Data extends RequestType<K>>(requestKey: K, data: Data): Promise<RequestResponseType<K>>;
+    public async request<K extends ResponseKeyNoData, Data extends RequestType<K>>(requestKey: K, data?: Data): Promise<RequestResponseType<K>>;
     public async request<K extends RequestKey | (string & { key?: any }), Data extends K extends RequestKey ? RequestType<K> : Record<string, unknown>>(
         requestKey: K,
         data: Data,
@@ -220,7 +227,9 @@ export class TachyonClient {
                 }
             });
 
-            this.validateRequest(requestKey as RequestKey, data);
+            if (data) {
+                this.validateRequest(requestKey as RequestKey, data);
+            }
 
             if (responseKey && responseKey !== "none") {
                 const signalBinding = this.onResponse(responseKey).add((data) => {
@@ -280,7 +289,7 @@ export class TachyonClient {
 
     protected startPingInterval() {
         this.pingIntervalId = setInterval(() => {
-            this.request("c.system.ping", {});
+            this.request("c.system.ping");
         }, this.config.pingIntervalMs);
     }
 

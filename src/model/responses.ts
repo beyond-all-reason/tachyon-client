@@ -56,13 +56,16 @@ export const responses = {
         user: Type.Optional(myUserSchema),
         reason: Type.Optional(Type.String()),
     }),
-    "s.auth.disconnect": Type.Object({}), // this doesn't actually exist as a response but keeping it here to simplify typings
     /**
      * User
      */
     "s.user.user_and_client_list": Type.Object({
         clients: Type.Array(playerSchema),
         users: Type.Array(userSchema),
+    }),
+    "s.user.list_friend_users_and_clients": Type.Object({
+        user_list: Type.Array(userSchema),
+        client_list: Type.Array(playerSpecificSchema),
     }),
     /**
      * lobby

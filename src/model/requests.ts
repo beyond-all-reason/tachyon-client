@@ -6,7 +6,7 @@ export const requests = {
     /**
      * system
      */
-    "c.system.ping": Type.Object({}),
+    "c.system.ping": Type.Void(),
     "c.system.watch": Type.Object({
         channel: Type.String(),
     }),
@@ -32,7 +32,11 @@ export const requests = {
         token: Type.String(),
         code: Type.String(),
     }),
-    "c.auth.disconnect": Type.Object({}),
+    "c.auth.disconnect": Type.Void(),
+    /**
+     * user
+     */
+    "c.user.list_friend_users_and_clients": Type.Void(),
     /**
      * lobby
      */
@@ -59,7 +63,7 @@ export const requests = {
             Type.Literal("reject"),
         ]),
     }),
-    "c.lobby.leave": Type.Object({}),
+    "c.lobby.leave": Type.Void(),
     "c.lobby.create": Type.Object({
         name: Type.String(),
         nattype: Type.String(),
