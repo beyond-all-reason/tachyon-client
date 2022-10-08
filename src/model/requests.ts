@@ -123,25 +123,16 @@ export const requests = {
     "c.user.add_friend": Type.Object({
         user_id: Type.Number(),
     }),
-    "c.user.friend_request": Type.Object({
-        user_id: Type.Number(),
-    }),
     "c.user.rescind_friend_request": Type.Object({
         user_id: Type.Number(),
     }),
     "c.user.accept_friend_request": Type.Object({
         user_id: Type.Number(),
     }),
-    "c.user.new_friend": Type.Object({
-        user_id: Type.Number(),
-    }),
     "c.user.reject_friend_request": Type.Object({
         user_id: Type.Number(),
     }),
     "c.user.remove_friend": Type.Object({
-        user_id: Type.Number(),
-    }),
-    "c.user.friend_removed": Type.Object({
         user_id: Type.Number(),
     }),
 } as const;

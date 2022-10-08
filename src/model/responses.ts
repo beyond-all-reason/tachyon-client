@@ -11,31 +11,7 @@ export const battleSchema = Type.Object({
 });
 
 export const responses = {
-    /**
-     * system
-     */
-    "s.system.server_event": Type.Object({
-        event: Type.String(),
-        node: Type.String(),
-    }),
-    "s.system.pong": Type.Object({
-        time: Type.Number(),
-    }),
-    "s.system.watch": Type.Object({
-        channel: Type.String(),
-        result: Type.String(),
-    }),
-    "s.system.server_stats": Type.Object({
-        data: Type.Object({
-            in_progress_lobby_count: Type.Number(),
-            lobby_count: Type.Number(),
-            player_count: Type.Number(),
-            user_count: Type.Number(),
-        }),
-    }),
-    /**
-     * auth
-     */
+    // auth
     "s.auth.register": Type.Object({
         result: Type.String(),
         reason: Type.Optional(Type.String()),
@@ -56,20 +32,38 @@ export const responses = {
         user: Type.Optional(myUserSchema),
         reason: Type.Optional(Type.String()),
     }),
-    /**
-     * User
-     */
-    "s.user.user_and_client_list": Type.Object({
-        clients: Type.Array(playerSchema),
-        users: Type.Array(userSchema),
+
+    // communication
+    "s.communication.send_direct_message": Type.Object({
+        result: Type.String(),
     }),
-    "s.user.list_friend_users_and_clients": Type.Object({
-        user_list: Type.Array(userSchema),
-        client_list: Type.Array(playerSpecificSchema),
+    "s.communication.received_direct_message": Type.Object({
+        sender_id: Type.Number(),
+        message: Type.String(),
     }),
-    /**
-     * lobby
-     */
+
+    // system
+    "s.system.server_event": Type.Object({
+        event: Type.String(),
+        node: Type.String(),
+    }),
+    "s.system.pong": Type.Object({
+        time: Type.Number(),
+    }),
+    "s.system.watch": Type.Object({
+        channel: Type.String(),
+        result: Type.String(),
+    }),
+    "s.system.server_stats": Type.Object({
+        data: Type.Object({
+            in_progress_lobby_count: Type.Number(),
+            lobby_count: Type.Number(),
+            player_count: Type.Number(),
+            user_count: Type.Number(),
+        }),
+    }),
+
+    // lobby
     "s.lobby.query": Type.Object({
         result: Type.String(),
         lobbies: Type.Array(battleSchema),
@@ -169,14 +163,32 @@ export const responses = {
         message: Type.String(),
         sender_id: Type.Number(),
     }),
-    /**
-     * communication
-     */
-    "s.communication.send_direct_message": Type.Object({
-        result: Type.String(),
+
+    // user
+    /** @deprecated replaced with s.user.user_list */
+    "s.user.user_and_client_list": Type.Object({
+        clients: Type.Array(playerSchema),
+        users: Type.Array(userSchema),
     }),
-    "s.communication.received_direct_message": Type.Object({
-        sender_id: Type.Number(),
-        message: Type.String(),
+    "s.user.user_list": Type.Object({
+        user_list: Type.Array(userSchema),
+        client_list: Type.Optional(Type.Array(playerSpecificSchema)),
+    }),
+    "s.user.list_friend_ids": Type.Object({
+        friend_id_list: Type.Array(Type.Number()),
+        request_id_list: Type.Array(Type.Number()),
+    }),
+    "s.user.list_friend_users_and_clients": Type.Object({
+        user_list: Type.Array(userSchema),
+        client_list: Type.Array(playerSpecificSchema),
+    }),
+    "s.user.friend_request": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "s.user.new_friend": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "s.user.friend_removed": Type.Object({
+        user_id: Type.Number(),
     }),
 } as const;
