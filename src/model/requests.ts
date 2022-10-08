@@ -4,13 +4,6 @@ import { baseClientSchema } from "~/model/common";
 
 export const requests = {
     /**
-     * system
-     */
-    "c.system.ping": Type.Void(),
-    "c.system.watch": Type.Object({
-        channel: Type.String(),
-    }),
-    /**
      * auth
      */
     "c.auth.register": Type.Object({
@@ -34,9 +27,12 @@ export const requests = {
     }),
     "c.auth.disconnect": Type.Void(),
     /**
-     * user
+     * communication
      */
-    "c.user.list_friend_users_and_clients": Type.Void(),
+    "c.communication.send_direct_message": Type.Object({
+        recipient_id: Type.Number(),
+        message: Type.String(),
+    }),
     /**
      * lobby
      */
@@ -46,10 +42,6 @@ export const requests = {
             in_progress: Type.Optional(Type.Boolean()),
         }),
         fields: Type.Array(Type.String()),
-    }),
-    "c.user.list_users_from_ids": Type.Object({
-        id_list: Type.Array(Type.Number()),
-        include_clients: Type.Literal(true), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
     }),
     "c.lobby.join": Type.Object({
         lobby_id: Type.Number(),
@@ -110,10 +102,46 @@ export const requests = {
         name: Type.String(),
     }),
     /**
-     * communication
+     * system
      */
-    "c.communication.send_direct_message": Type.Object({
-        recipient_id: Type.Number(),
-        message: Type.String(),
+    "c.system.ping": Type.Void(),
+    "c.system.watch": Type.Object({
+        channel: Type.String(),
+    }),
+    /**
+     * user
+     */
+    "c.user.list_users_from_ids": Type.Object({
+        id_list: Type.Array(Type.Number()),
+        include_clients: Type.Boolean({ default: true }), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
+    }),
+    "c.user.list_friend_ids": Type.Object({
+        friend_id_list: Type.Array(Type.Number()),
+        request_id_list: Type.Array(Type.Number()),
+    }),
+    "c.user.list_friend_users_and_clients": Type.Void(),
+    "c.user.add_friend": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.friend_request": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.rescind_friend_request": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.accept_friend_request": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.new_friend": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.reject_friend_request": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.remove_friend": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.user.friend_removed": Type.Object({
+        user_id: Type.Number(),
     }),
 } as const;
