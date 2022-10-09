@@ -29,6 +29,6 @@ export const requestResponseMap = shape({
     "c.system.ping": "s.system.pong",
 
     // user
-    "c.user.list_users_from_ids": "s.user.user_and_client_list",
+    "c.user.list_users_from_ids": "s.user.user_list",
     "c.user.list_friend_users_and_clients": "s.user.list_friend_users_and_clients",
 } as const);

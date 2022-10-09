@@ -165,11 +165,6 @@ export const responses = {
     }),
 
     // user
-    /** @deprecated replaced with s.user.user_list */
-    "s.user.user_and_client_list": Type.Object({
-        clients: Type.Array(playerSchema),
-        users: Type.Array(userSchema),
-    }),
     "s.user.user_list": Type.Object({
         user_list: Type.Array(userSchema),
         client_list: Type.Optional(Type.Array(playerSpecificSchema)),
