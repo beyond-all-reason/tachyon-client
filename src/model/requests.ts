@@ -113,7 +113,7 @@ export const requests = {
      */
     "c.user.list_users_from_ids": Type.Object({
         id_list: Type.Array(Type.Number()),
-        include_clients: Type.Boolean({ default: true }), // forcing this to ensure the response cmd is always "s.user.user_and_client_list"
+        include_clients: Type.Optional(Type.Boolean({ default: false })),
     }),
     "c.user.list_friend_ids": Type.Object({
         friend_id_list: Type.Array(Type.Number()),
