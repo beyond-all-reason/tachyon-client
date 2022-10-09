@@ -2,10 +2,6 @@ import { Type } from "@sinclair/typebox";
 
 export const userSchema = Type.Object({
     id: Type.Number(),
-    springid: Type.Union([
-        Type.Number(),
-        Type.String(),
-    ]), // TODO: Server will fix this
     name: Type.String(),
     bot: Type.Boolean(),
     clan_id: Type.Union([
