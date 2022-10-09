@@ -166,8 +166,8 @@ export const responses = {
 
     // user
     "s.user.user_list": Type.Object({
-        user_list: Type.Array(userSchema),
-        client_list: Type.Optional(Type.Array(playerSchema)),
+        users: Type.Array(userSchema),
+        clients: Type.Optional(Type.Array(playerSchema)),
     }),
     "s.user.list_friend_ids": Type.Object({
         friend_id_list: Type.Array(Type.Number()),
@@ -175,7 +175,7 @@ export const responses = {
     }),
     "s.user.list_friend_users_and_clients": Type.Object({
         user_list: Type.Array(userSchema),
-        client_list: Type.Array(playerSpecificSchema),
+        client_list: Type.Array(playerSchema),
     }),
     "s.user.friend_request": Type.Object({
         user_id: Type.Number(),
