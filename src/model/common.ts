@@ -39,7 +39,10 @@ export const baseClientSchema = Type.Object({
 
 export const playerSpecificSchema = Type.Object({
     userid: Type.Number(),
-    lobby_id: Type.Number(),
+    lobby_id: Type.Union([
+        Type.Number(),
+        Type.Null(),
+    ]),
     away: Type.Boolean(),
     in_game: Type.Boolean(),
     clan_tag: Type.Union([
