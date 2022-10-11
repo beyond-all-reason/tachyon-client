@@ -180,7 +180,7 @@ export const responses = {
     "s.user.friend_request": Type.Object({
         user_id: Type.Number(),
     }),
-    "s.user.new_friend": Type.Object({
+    "s.user.friend_added": Type.Object({
         user_id: Type.Number(),
     }),
     "s.user.friend_removed": Type.Object({
