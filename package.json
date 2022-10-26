@@ -4,6 +4,12 @@
   "description": "Client API for interfacing with Beyond All Reason's Teiserver via the Tachyon protocol",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./index.cjs",
+      "import": "./index.mjs"
+    }
+  },
   "scripts": {
     "prepublish": "npm run build",
     "build": "ttsc",
@@ -22,7 +28,7 @@
   "license": "mit",
   "dependencies": {
     "ajv": "^8.11.0",
-    "jaz-ts-utils": "^4.1.6",
+    "jaz-ts-utils": "^5.0.0",
     "type-fest": "^2.12.2"
   },
   "devDependencies": {
