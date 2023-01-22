@@ -69,10 +69,7 @@ export const responses = {
         lobbies: Type.Array(battleSchema),
     }),
     "s.lobby.join": Type.Object({
-        result: Type.Union([
-            Type.Literal("waiting_for_host"),
-            Type.Literal("failure"),
-        ]),
+        result: Type.Union([Type.Literal("waiting_for_host"), Type.Literal("failure")]),
         reason: Type.Optional(Type.String()),
     }),
     "s.lobby_host.request_to_join": Type.Object({
@@ -162,6 +159,10 @@ export const responses = {
     "s.lobby.received_lobby_direct_announce": Type.Object({
         message: Type.String(),
         sender_id: Type.Number(),
+    }),
+    "s.lobby.updated_queue": Type.Object({
+        lobby_id: Type.Number(),
+        queue: Type.Array(Type.Number()),
     }),
 
     // user
