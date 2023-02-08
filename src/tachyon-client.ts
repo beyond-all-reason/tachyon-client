@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Static } from "@sinclair/typebox";
 import Ajv, { ValidateFunction } from "ajv/dist/2020";
+import addFormats from "ajv-formats";
 import { objectKeys, Signal, SignalBinding } from "jaz-ts-utils";
 import { clearInterval, setInterval } from "timers";
 import * as tls from "tls";
@@ -61,13 +62,26 @@ export class TachyonClient {
             this.config.rejectUnauthorized = false;
         }
 
-        this.ajv = new Ajv({ allErrors: true });
-        this.ajv.addKeyword("kind");
-        this.ajv.addKeyword("modifier");
+        this.ajv = addFormats(new Ajv({ allErrors: true }), [
+            "date-time",
+            "time",
+            "date",
+            "email",
+            "hostname",
+            "ipv4",
+            "ipv6",
+            "uri",
+            "uri-reference",
+            "uuid",
+            "uri-template",
+            "json-pointer",
+            "relative-json-pointer",
+            "regex",
+        ]);
 
         objectKeys(requests).forEach((key) => {
             const requestSchema = requests[key];
-            if (requestSchema.type !== "void") {
+            if (requestSchema.type !== "null") {
                 if (requestSchema.type === "object") {
                     requestSchema.additionalProperties = false;
                 }
@@ -77,7 +91,7 @@ export class TachyonClient {
         });
         objectKeys(responses).forEach((key) => {
             const responseSchema = responses[key];
-            if (responseSchema.type !== "void") {
+            if (responseSchema.type !== "null") {
                 if (responseSchema.type === "object") {
                     responseSchema.additionalProperties = false;
                 }
