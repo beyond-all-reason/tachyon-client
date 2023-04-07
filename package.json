@@ -6,13 +6,14 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublish": "npm run build",
-    "build": "ttsc",
-    "dev": "ttsc --watch",
+    "build": "npm run gen && tsc",
+    "dev": "npm run gen && tsc --watch",
     "lint-check": "eslint . --ext .ts,.vue",
     "lint": "eslint . --ext .ts,.vue --fix",
     "format-check": "prettier --check src/**/*.{ts,vue,scss,json}",
     "format": "prettier --write src/**/*.{ts,vue,scss,json}",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "gen": "ts-node scripts/gen"
   },
   "repository": {
     "type": "git",
@@ -23,14 +24,19 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
+    "axios": "^1.3.4",
     "jaz-ts-utils": "^5.0.2",
-    "type-fest": "^2.12.2"
+    "protobufjs": "~7.2.2",
+    "type-fest": "^2.12.2",
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "@sinclair/typebox": "^0.25.21",
     "@types/eslint": "^7.2.5",
     "@types/jest": "^26.0.20",
+    "@types/long": "^5.0.0",
     "@types/node": "^14.14.22",
+    "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
     "@zerollup/ts-transform-paths": "^1.7.18",
@@ -38,9 +44,11 @@
     "eslint-plugin-simple-import-sort": "^6.0.1",
     "jest": "^26.6.3",
     "lint-staged": "^9.5.0",
+    "protobufjs-cli": "~1.1.1",
     "source-map-support": "^0.5.20",
-    "ts-node": "^9.1.1",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.1.2",
     "ttypescript": "^1.5.12",
-    "typescript": "^4.6.4"
+    "typescript": "^4.9.5"
   }
 }

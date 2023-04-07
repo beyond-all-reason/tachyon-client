@@ -1,10 +1,27 @@
 {
     "extends": "./node_modules/jaz-ts-utils/tsconfig.json",
     "compilerOptions": {
+        "target": "esnext",
+        "module": "ESNext",
         "baseUrl": ".",
         "outDir": "./dist",
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "checkJs": false,
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "moduleResolution": "node",
+        "declaration": true,
+        "sourceMap": true,
     },
     "include": [
-        "src/**/*",
-    ]
+        "src/**/*.ts"
+    ],
+    "ts-node": {
+        "compilerOptions": {
+            "module": "CommonJS",
+            "moduleResolution": "node",
+            "resolveJsonModule": true
+        }
+    },
 }

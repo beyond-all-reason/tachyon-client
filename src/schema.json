@@ -1,0 +1,488 @@
+{
+  "options": {
+    "objc_class_prefix": "Tachyon"
+  },
+  "nested": {
+    "tachyon": {
+      "nested": {
+        "WsMessaging": {
+          "methods": {
+            "Client": {
+              "requestType": "ClientMessage",
+              "responseType": "ServerMessage"
+            },
+            "Server": {
+              "requestType": "ServerMessage",
+              "responseType": "ClientMessage"
+            }
+          }
+        },
+        "AccountService": {
+          "methods": {
+            "AccountMigration": {
+              "requestType": "AccountMigrationRequest",
+              "responseType": "AccountMigrationResponse"
+            },
+            "WhoisMyself": {
+              "requestType": "MyselfRequest",
+              "responseType": "MyselfResponse"
+            },
+            "ListUsers": {
+              "requestType": "UserListRequest",
+              "responseType": "UserListResponse"
+            }
+          }
+        },
+        "LobbyService": {
+          "methods": {
+            "ListLobbies": {
+              "requestType": "LobbyListRequest",
+              "responseType": "LobbyListResponse"
+            }
+          }
+        },
+        "ClientMessage": {
+          "oneofs": {
+            "object": {
+              "oneof": [
+                "empty",
+                "failure",
+                "accountMigrationRequest",
+                "myselfRequest",
+                "userListRequest",
+                "lobbyListRequest"
+              ]
+            }
+          },
+          "fields": {
+            "id": {
+              "type": "int64",
+              "id": 1
+            },
+            "empty": {
+              "type": "Empty",
+              "id": 80
+            },
+            "failure": {
+              "type": "Failure",
+              "id": 81
+            },
+            "accountMigrationRequest": {
+              "type": "AccountMigrationRequest",
+              "id": 100
+            },
+            "myselfRequest": {
+              "type": "MyselfRequest",
+              "id": 101
+            },
+            "userListRequest": {
+              "type": "UserListRequest",
+              "id": 102
+            },
+            "lobbyListRequest": {
+              "type": "LobbyListRequest",
+              "id": 120
+            }
+          }
+        },
+        "ServerMessage": {
+          "oneofs": {
+            "object": {
+              "oneof": [
+                "empty",
+                "failure",
+                "accountMigrationResponse",
+                "myselfResponse",
+                "userListResponse",
+                "lobbyListResponse"
+              ]
+            }
+          },
+          "fields": {
+            "id": {
+              "type": "int64",
+              "id": 1
+            },
+            "empty": {
+              "type": "Empty",
+              "id": 80
+            },
+            "failure": {
+              "type": "Failure",
+              "id": 81
+            },
+            "accountMigrationResponse": {
+              "type": "AccountMigrationResponse",
+              "id": 100
+            },
+            "myselfResponse": {
+              "type": "MyselfResponse",
+              "id": 101
+            },
+            "userListResponse": {
+              "type": "UserListResponse",
+              "id": 102
+            },
+            "lobbyListResponse": {
+              "type": "LobbyListResponse",
+              "id": 120
+            }
+          }
+        },
+        "Failure": {
+          "fields": {
+            "action": {
+              "type": "string",
+              "id": 1
+            },
+            "reason": {
+              "type": "string",
+              "id": 2
+            }
+          }
+        },
+        "Empty": {
+          "fields": {}
+        },
+        "TokenRequest": {
+          "fields": {
+            "email": {
+              "type": "string",
+              "id": 1
+            },
+            "password": {
+              "type": "string",
+              "id": 2
+            }
+          }
+        },
+        "TokenResponse": {
+          "fields": {
+            "token": {
+              "type": "string",
+              "id": 1
+            }
+          }
+        },
+        "LoginRequest": {
+          "fields": {
+            "token": {
+              "type": "string",
+              "id": 1
+            },
+            "appName": {
+              "type": "string",
+              "id": 2
+            },
+            "appVersion": {
+              "type": "string",
+              "id": 3
+            },
+            "appHash": {
+              "type": "string",
+              "id": 4
+            }
+          }
+        },
+        "LoginResponse": {
+          "fields": {
+            "user": {
+              "type": "User",
+              "id": 1
+            }
+          }
+        },
+        "VerifyRequest": {
+          "fields": {
+            "token": {
+              "type": "string",
+              "id": 1
+            },
+            "code": {
+              "type": "string",
+              "id": 2
+            }
+          }
+        },
+        "VerifyResponse": {
+          "fields": {
+            "user": {
+              "type": "User",
+              "id": 1
+            }
+          }
+        },
+        "DisconnectRequest": {
+          "fields": {
+            "reason": {
+              "type": "string",
+              "id": 1
+            }
+          }
+        },
+        "RegistrationRequest": {
+          "fields": {
+            "username": {
+              "type": "string",
+              "id": 1
+            },
+            "email": {
+              "type": "string",
+              "id": 2
+            },
+            "password": {
+              "type": "string",
+              "id": 3
+            }
+          }
+        },
+        "RegistrationResponse": {
+          "fields": {
+            "token": {
+              "type": "string",
+              "id": 1
+            }
+          }
+        },
+        "AccountMigrationRequest": {
+          "fields": {
+            "username": {
+              "type": "string",
+              "id": 1
+            },
+            "password": {
+              "type": "string",
+              "id": 2
+            },
+            "desiredEmail": {
+              "type": "string",
+              "id": 3
+            }
+          }
+        },
+        "AccountMigrationResponse": {
+          "fields": {
+            "token": {
+              "type": "string",
+              "id": 1
+            }
+          }
+        },
+        "User": {
+          "fields": {
+            "id": {
+              "type": "int32",
+              "id": 1
+            },
+            "name": {
+              "type": "string",
+              "id": 2
+            },
+            "bot": {
+              "type": "bool",
+              "id": 3
+            },
+            "clanId": {
+              "type": "int32",
+              "id": 4
+            },
+            "icons": {
+              "keyType": "string",
+              "type": "string",
+              "id": 5
+            }
+          }
+        },
+        "PrivateUser": {
+          "fields": {
+            "id": {
+              "type": "int32",
+              "id": 1
+            },
+            "name": {
+              "type": "string",
+              "id": 2
+            },
+            "bot": {
+              "type": "bool",
+              "id": 3
+            },
+            "clanId": {
+              "type": "int32",
+              "id": 4
+            },
+            "icons": {
+              "keyType": "string",
+              "type": "string",
+              "id": 5
+            },
+            "permissions": {
+              "rule": "repeated",
+              "type": "string",
+              "id": 9
+            },
+            "friends": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 10
+            },
+            "friendRequests": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 11
+            },
+            "ignores": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 12
+            }
+          }
+        },
+        "MyselfRequest": {
+          "fields": {}
+        },
+        "MyselfResponse": {
+          "fields": {
+            "user": {
+              "type": "PrivateUser",
+              "id": 2
+            }
+          }
+        },
+        "UserListRequest": {
+          "fields": {
+            "idList": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 1
+            }
+          }
+        },
+        "UserListResponse": {
+          "fields": {
+            "userList": {
+              "rule": "repeated",
+              "type": "User",
+              "id": 1
+            }
+          }
+        },
+        "LobbyListRequest": {
+          "fields": {
+            "idList": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 1
+            },
+            "locked": {
+              "type": "LobbyStatus",
+              "id": 2
+            },
+            "passworded": {
+              "type": "bool",
+              "id": 3
+            }
+          }
+        },
+        "LobbyListResponse": {
+          "fields": {
+            "lobbyList": {
+              "rule": "repeated",
+              "type": "Lobby",
+              "id": 1
+            }
+          }
+        },
+        "LobbyStatus": {
+          "values": {
+            "LOBBY_UNLOCKED": 0,
+            "LOBBY_FRIENDS": 1,
+            "LOBBY_WHITELIST": 2,
+            "LOBBY_LOCKED": 3
+          }
+        },
+        "StartArea": {
+          "fields": {
+            "type": {
+              "type": "string",
+              "id": 1
+            },
+            "values": {
+              "keyType": "string",
+              "type": "sint32",
+              "id": 2
+            }
+          }
+        },
+        "Lobby": {
+          "fields": {
+            "id": {
+              "type": "int32",
+              "id": 1
+            },
+            "name": {
+              "type": "string",
+              "id": 2
+            },
+            "founderId": {
+              "type": "int32",
+              "id": 3
+            },
+            "passworded": {
+              "type": "bool",
+              "id": 4
+            },
+            "locked": {
+              "type": "LobbyStatus",
+              "id": 5
+            },
+            "engineName": {
+              "type": "string",
+              "id": 6
+            },
+            "engineVersion": {
+              "type": "string",
+              "id": 7
+            },
+            "players": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 8
+            },
+            "spectators": {
+              "rule": "repeated",
+              "type": "int32",
+              "id": 9
+            },
+            "ip": {
+              "type": "string",
+              "id": 11
+            },
+            "settings": {
+              "keyType": "string",
+              "type": "string",
+              "id": 12
+            },
+            "startAreas": {
+              "keyType": "int32",
+              "type": "StartArea",
+              "id": 13
+            },
+            "mapName": {
+              "type": "string",
+              "id": 14
+            },
+            "mapHash": {
+              "type": "string",
+              "id": 15
+            },
+            "public": {
+              "type": "bool",
+              "id": 16
+            }
+          }
+        }
+      }
+    }
+  }
+}
