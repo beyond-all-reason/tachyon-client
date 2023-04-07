@@ -23,7 +23,7 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
-    "jaz-ts-utils": "^5.0.2",
+    "jaz-ts-utils": "^6.1.0",
     "type-fest": "^2.12.2"
   },
   "devDependencies": {
@@ -40,7 +40,8 @@
     "lint-staged": "^9.5.0",
     "source-map-support": "^0.5.20",
     "ts-node": "^9.1.1",
-    "ttypescript": "^1.5.12",
-    "typescript": "^4.6.4"
+    "ttypescript": "^1.5.15",
+    "typescript": "^4.6.4",
+    "typescript-transform-paths": "^3.4.6"
   }
 }
