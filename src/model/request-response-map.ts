@@ -31,4 +31,9 @@ export const requestResponseMap = shape({
     // user
     "c.user.list_users_from_ids": "s.user.user_list",
     "c.user.list_friend_users_and_clients": "s.user.list_friend_users_and_clients",
+
+    // matchmaking
+    "c.matchmaking.query": "s.matchmaking.query",
+    "c.matchmaking.get_queue_info": "s.matchmaking.queue_info",
+    "c.matchmaking.accept": "s.matchmaking.match_ready",
 } as const);

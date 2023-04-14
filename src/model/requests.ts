@@ -135,4 +135,27 @@ export const requests = {
     "c.user.remove_friend": Type.Object({
         user_id: Type.Number(),
     }),
+    //matchmaking
+    "c.matchmaking.query": Type.Object({
+        query: Type.Object({
+            ranked: Type.Boolean(),
+            user_id: Type.Number(),
+        })
+    }),
+    "c.matchmaking.get_queue_info": Type.Object({
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.join_queue": Type.Object({
+        user_id: Type.Number(),
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.leave_queue": Type.Object({
+        user_id: Type.Number(),
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.leave_all_queues": Type.Object({
+        user_id: Type.Number(),
+    }),
+
+
 } as const;
