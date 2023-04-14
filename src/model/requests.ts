@@ -135,4 +135,34 @@ export const requests = {
     "c.user.remove_friend": Type.Object({
         user_id: Type.Number(),
     }),
+    //matchmaking
+    "c.matchmaking.query": Type.Object({
+        query: Type.Object({
+            ranked: Type.Boolean(),
+            user_id: Type.Number(),
+        })
+    }),
+    "c.matchmaking.get_queue_info": Type.Object({
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.join_queue": Type.Object({
+        user_id: Type.Number(),
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.leave_queue": Type.Object({
+        user_id: Type.Number(),
+        queue_id: Type.Number(),
+    }),
+    "c.matchmaking.leave_all_queues": Type.Object({
+        user_id: Type.Number(),
+    }),
+    "c.matchmaking.accept": Type.Object({
+        user_id: Type.Number(),
+        match_id: Type.String(),
+    }),
+    "c.matchmaking.decline": Type.Object({
+        user_id: Type.Number(),
+    }),
+    //todo "c.matchmaking.list_my_queues": Type.Obejct({}), currently not defined in the tachyon documents
+
 } as const;
