@@ -156,6 +156,13 @@ export const requests = {
     "c.matchmaking.leave_all_queues": Type.Object({
         user_id: Type.Number(),
     }),
-
+    "c.matchmaking.accept": Type.Object({
+        user_id: Type.Number(),
+        match_id: Type.String(),
+    }),
+    "c.matchmaking.decline": Type.Object({
+        user_id: Type.Number(),
+    }),
+    //todo "c.matchmaking.list_my_queues": Type.Obejct({}), currently not defined in the tachyon documents
 
 } as const;
