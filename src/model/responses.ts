@@ -187,4 +187,35 @@ export const responses = {
     "s.user.friend_removed": Type.Object({
         user_id: Type.Number(),
     }),
+    //matchmaking
+    "s.matchmaking.query": Type.Object({
+        matchmaking_list: Type.Array(Type.Object({
+            queue_id: Type.Number(),
+            name: Type.String(),
+            mean_wait_time: Type.Number(),
+            group_count: Type.Number(),
+        }))
+    }),
+    "s.matchmaking.queue_info": Type.Object({
+        queue: Type.Object({
+            queue_id: Type.Number(),
+            name: Type.String(),
+            mean_wait_time: Type.Number(),
+            group_count: Type.Number(),
+        })
+    }),
+    "s.matchmaking.match_ready": Type.Object({
+        match_id: Type.String(),
+        queue_id: Type.Number(),
+    }),
+    "s.matchmaking.match_declined": Type.Object({
+        match_id: Type.String(),
+        queue_id: Type.Number(),
+    }),
+    "s.matchmaking.match_cancelled": Type.Object({
+        match_id: Type.String(),
+        queue_id: Type.Number(),
+    }),
+
+
 } as const;
