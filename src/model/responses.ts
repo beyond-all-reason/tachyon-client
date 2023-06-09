@@ -5,7 +5,7 @@ import { botSchema, lobbySchema, myUserSchema, playerSchema, playerSpecificSchem
 export const battleSchema = Type.Object({
     lobby: lobbySchema,
     bots: Type.Optional(Type.Record(Type.String(), botSchema)),
-    modoptions: Type.Optional(Type.Record(Type.String(), Type.String())),
+    modoptions: Type.Optional(Type.Record(Type.String(), Type.Any())),
     member_list: Type.Optional(Type.Array(playerSpecificSchema)),
     script_password: Type.Optional(Type.String()),
 });
