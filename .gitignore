@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
-/dist
+dist
+tachyon
 
 
 # local env files
@@ -23,10 +24,25 @@ pnpm-debug.log*
 
 #Electron-builder output
 /dist_electron
+out
 
 /working-files
 /src/test
 output.js
 routes.js
 todo.txt
+/replays.db
+/test.json
+
+*.local
+thumbs.db
+
+.eslintcache
+.browserslistrc
+.electron-vendors.cache.json
+/tsconfig.node.tsbuildinfo
+/tsconfig.web.tsbuildinfo
 debug.log
+database.db
+node_modules
+config.json

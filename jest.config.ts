@@ -1,8 +1,22 @@
-import type {Config} from "@jest/types";
+import { Config } from "jest";
 
-const config: Config.InitialOptions = {
-    verbose: false,
-    coveragePathIgnorePatterns: ["working-files"],
-    modulePathIgnorePatterns: ["working-files"],
+const config: Config = {
+    preset: "ts-jest",
+    testEnvironment: "node",
+    rootDir: "test",
+    moduleNameMapper: {
+        "^@/(.*)$": "../dist/$1",
+        "^(\\.{1,2}/.*)\\.js$": "$1",
+    },
+    transform: {
+        "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+                useESM: true,
+            },
+        ],
+    },
+    extensionsToTreatAsEsm: [".ts"],
 };
+
 export default config;
