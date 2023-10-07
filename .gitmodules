@@ -1,4 +1,0 @@
-[submodule "tachyon"]
-	path = tachyon
-	url = git@github.com:beyond-all-reason/tachyon.git
-	branch = master

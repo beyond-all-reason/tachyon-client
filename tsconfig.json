@@ -18,10 +18,9 @@
         "paths": {
             "@/*": ["src/*"]
         },
-        "plugins": []
+        "plugins": [],
     },
-    "exclude": ["tachyon"],
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "tachyon/**/*"],
     "references": [
         {
             "path": "./tachyon"
