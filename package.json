@@ -30,6 +30,7 @@
     "kysely": "^0.25.0",
     "node-config-ts": "^3.3.1",
     "nodemailer": "^6.9.3",
+    "tachyon-protocol": "^0.1.5",
     "ws": "^8.13.0"
   },
   "devDependencies": {

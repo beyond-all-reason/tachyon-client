@@ -16,14 +16,19 @@ ajv.addKeyword("requiresRole");
 
 export const validators: Map<string, ValidateFunction> = new Map();
 
-const services = await fs.promises.readdir(path.join(__dirname, "./tachyon/dist"));
+const services = await fs.promises.readdir(path.join(__dirname, "./node_modules/tachyon/dist"));
 for (const serviceId of services.filter((s) => !s.includes("."))) {
-    const endpoints = await fs.promises.readdir(path.join(__dirname, "./tachyon/dist", serviceId));
+    const endpoints = await fs.promises.readdir(path.join(__dirname, "./node_modules/tachyon/dist", serviceId));
     for (const endpointId of endpoints) {
-        const commands = await fs.promises.readdir(path.join(__dirname, "./tachyon/dist", serviceId, endpointId));
+        const commands = await fs.promises.readdir(
+            path.join(__dirname, "./node_modules/tachyon/dist", serviceId, endpointId)
+        );
         for (const command of commands) {
             const schema = JSON.parse(
-                fs.readFileSync(path.join(__dirname, "./tachyon/dist", serviceId, endpointId, command), "utf-8")
+                fs.readFileSync(
+                    path.join(__dirname, "./node_modules/tachyon/dist", serviceId, endpointId, command),
+                    "utf-8"
+                )
             );
             const validator = ajv.compile(schema);
             const commandId = path.parse(command).name;

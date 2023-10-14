@@ -20,14 +20,9 @@
         },
         "plugins": [],
     },
-    "include": ["src/**/*", "tachyon/**/*"],
-    "references": [
-        {
-            "path": "./tachyon"
-        }
-    ],
+    "include": ["src/**/*"],
     "ts-node": {
         "esm": true,
-        "swc": true
+        "swc": true,
     }
 }

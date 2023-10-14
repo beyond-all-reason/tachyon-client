@@ -1,6 +1,6 @@
+import chalk from "chalk";
+import fs from "fs";
 import { Signal } from "jaz-ts-utils";
-import { WebSocket } from "ws";
-
 // eslint-disable-next-line no-restricted-imports
 import type {
     RequestData,
@@ -9,20 +9,54 @@ import type {
     ResponseEndpointId,
     ResponseType,
     ServiceId,
-} from "../tachyon/dist/index.d.ts";
+} from "tachyon-protocol";
+import { ClientOptions, WebSocket } from "ws";
+
+const tachyonPackageStr = fs.readFileSync("./node_modules/tachyon-protocol/package.json", { encoding: "utf-8" });
+const tachyonPackageJson = JSON.parse(tachyonPackageStr);
+const tachyonVersion = tachyonPackageJson.version;
+
+export interface TachyonClientOptions extends ClientOptions {
+    logging?: boolean;
+}
 
 export class TachyonClient {
     protected socket: WebSocket;
     protected responseSignals: Map<string, Signal> = new Map();
+    protected config: TachyonClientOptions;
 
-    constructor(...args: ConstructorParameters<typeof WebSocket>) {
-        this.socket = new WebSocket(...args);
+    constructor(address: string | URL, wsOptions?: TachyonClientOptions) {
+        this.config = wsOptions ?? { logging: false };
+
+        this.socket = new WebSocket(`${address}?tachyonVersion=${tachyonVersion}`, {
+            ...wsOptions,
+        });
+
+        this.socket.on("open", () => {
+            if (this.config.logging) {
+                console.log(chalk.green(`Connected to ${address} using Tachyon Version ${tachyonVersion}`));
+            }
+        });
 
         this.socket.on("message", (message) => {
             const response = JSON.parse(message.toString());
             const signal = this.responseSignals.get(response.command);
             if (signal) {
                 signal.dispatch(response);
+            }
+
+            if (this.config.logging) {
+                console.log("RESPONSE", response);
+            }
+        });
+
+        this.on("system", "version").add((command) => {
+            if (command.status === "success" && command.data.versionParity !== "match") {
+                console.warn(
+                    chalk.yellow(
+                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonVersion}. Mismatch type: ${command.data.versionParity}`
+                    )
+                );
             }
         });
     }
@@ -43,6 +77,10 @@ export class TachyonClient {
             });
 
             this.socket.send(JSON.stringify(request));
+
+            if (this.config.logging) {
+                console.log("REQUEST", request);
+            }
         });
     }
 
