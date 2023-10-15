@@ -1,22 +1,19 @@
+import { ValidateFunction } from "ajv";
 import chalk from "chalk";
-import fs from "fs";
 import { Signal } from "jaz-ts-utils";
 // eslint-disable-next-line no-restricted-imports
-import type {
-    RequestData,
-    RequestEndpointId,
-    RequestType,
-    ResponseEndpointId,
-    ResponseType,
-    ServiceId,
-} from "tachyon-protocol";
+import type { RequestData, RequestEndpointId, ResponseEndpointId, ResponseType, ServiceId } from "tachyon-protocol";
+import tachyonMeta from "tachyon-protocol/dist/meta.json" assert { type: "json" };
 import { ClientOptions, WebSocket } from "ws";
 
-const tachyonPackageStr = fs.readFileSync("./node_modules/tachyon-protocol/package.json", { encoding: "utf-8" });
-const tachyonPackageJson = JSON.parse(tachyonPackageStr);
-const tachyonVersion = tachyonPackageJson.version;
+import { getValidators } from "@/validators.js";
+
+let validators: Map<string, ValidateFunction> = new Map();
 
 export interface TachyonClientOptions extends ClientOptions {
+    host: string;
+    port: number;
+    ssl?: boolean;
     logging?: boolean;
 }
 
@@ -25,22 +22,43 @@ export class TachyonClient {
     protected responseSignals: Map<string, Signal> = new Map();
     protected config: TachyonClientOptions;
 
-    constructor(address: string | URL, wsOptions?: TachyonClientOptions) {
-        this.config = wsOptions ?? { logging: false };
+    protected constructor(config: TachyonClientOptions) {
+        this.config = config;
 
-        this.socket = new WebSocket(`${address}?tachyonVersion=${tachyonVersion}`, {
-            ...wsOptions,
-        });
+        const protocol = config.ssl ? "wss" : "ws";
+        this.socket = new WebSocket(
+            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonMeta.version}`,
+            {
+                ...config,
+            }
+        );
 
-        this.socket.on("open", () => {
+        this.socket.on("open", async () => {
             if (this.config.logging) {
-                console.log(chalk.green(`Connected to ${address} using Tachyon Version ${tachyonVersion}`));
+                console.log(
+                    chalk.green(
+                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonMeta.version}`
+                    )
+                );
             }
         });
 
         this.socket.on("message", (message) => {
             const response = JSON.parse(message.toString());
             const signal = this.responseSignals.get(response.command);
+
+            const validator = validators.get(response.command);
+
+            if (!validator) {
+                throw new Error(`No response validator found for ${response.command}`);
+            }
+
+            const isValid = validator(response);
+            if (!isValid) {
+                console.error(validator.errors);
+                throw new Error(`Response validation failed for ${response.command}`);
+            }
+
             if (signal) {
                 signal.dispatch(response);
             }
@@ -54,11 +72,17 @@ export class TachyonClient {
             if (command.status === "success" && command.data.versionParity !== "match") {
                 console.warn(
                     chalk.yellow(
-                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonVersion}. Mismatch type: ${command.data.versionParity}`
+                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
                     )
                 );
             }
         });
+    }
+
+    public static async create(config: TachyonClientOptions) {
+        validators = await getValidators();
+
+        return new TachyonClient(config);
     }
 
     public request<S extends ServiceId, E extends RequestEndpointId<S> & ResponseEndpointId<S>>(
@@ -70,7 +94,19 @@ export class TachyonClient {
             const request = {
                 command: `${serviceId}/${endpointId}/request`,
                 data,
-            } as RequestType<S, E>;
+            };
+
+            const validator = validators.get(`${serviceId}/${endpointId}/request`);
+
+            if (!validator) {
+                throw new Error(`No request validator found for ${serviceId}/${endpointId}`);
+            }
+
+            const isValid = validator(request);
+            if (!isValid) {
+                console.error(validator.errors);
+                throw new Error(`Request validation failed for ${serviceId}/${endpointId}`);
+            }
 
             this.on(serviceId, endpointId).addOnce((data) => {
                 resolve(data);

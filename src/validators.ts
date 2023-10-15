@@ -2,37 +2,32 @@
 
 import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import tachyonMeta from "tachyon-protocol/dist/meta.json" assert { type: "json" };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const ajv = new Ajv({ coerceTypes: true });
-addFormats(ajv);
+const ajv = new Ajv.default({ coerceTypes: true });
+addFormats.default(ajv);
 ajv.addKeyword("requiresLogin");
 ajv.addKeyword("requiresRole");
 
-export const validators: Map<string, ValidateFunction> = new Map();
+export async function getValidators(): Promise<Map<string, Ajv.ValidateFunction<unknown>>> {
+    const validators: Map<string, ValidateFunction> = new Map();
 
-const services = await fs.promises.readdir(path.join(__dirname, "./node_modules/tachyon/dist"));
-for (const serviceId of services.filter((s) => !s.includes("."))) {
-    const endpoints = await fs.promises.readdir(path.join(__dirname, "./node_modules/tachyon/dist", serviceId));
-    for (const endpointId of endpoints) {
-        const commands = await fs.promises.readdir(
-            path.join(__dirname, "./node_modules/tachyon/dist", serviceId, endpointId)
-        );
-        for (const command of commands) {
-            const schema = JSON.parse(
-                fs.readFileSync(
-                    path.join(__dirname, "./node_modules/tachyon/dist", serviceId, endpointId, command),
-                    "utf-8"
-                )
-            );
-            const validator = ajv.compile(schema);
-            const commandId = path.parse(command).name;
-            validators.set(`${serviceId}/${endpointId}/${commandId}`, validator);
+    const serviceIds = tachyonMeta.ids as Record<string, Record<string, string[]>>;
+
+    for (const serviceId in serviceIds) {
+        const endpointIds = serviceIds[serviceId];
+        for (const endpointId in endpointIds) {
+            const commandTypes = endpointIds[endpointId];
+            for (const commandType of commandTypes) {
+                const commandSchema = await import(
+                    `tachyon-protocol/dist/${serviceId}/${endpointId}/${commandType}.json`,
+                    { assert: { type: "json" } }
+                );
+                const validator = ajv.compile(commandSchema);
+                validators.set(`${serviceId}/${endpointId}/${commandType}`, validator);
+            }
         }
     }
+
+    return validators;
 }
