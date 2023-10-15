@@ -8,7 +8,6 @@
     "dev": "npm run build -- --watch src",
     "build": "tsup",
     "prepublishOnly": "npm run build",
-    "prepare": "ts-patch install -s",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "type": "module",
