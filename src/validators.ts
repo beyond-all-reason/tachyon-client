@@ -2,11 +2,14 @@ import Ajv, { ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 const ajv = new Ajv.default({ coerceTypes: true });
 addFormats.default(ajv);
 ajv.addKeyword("requiresLogin");
 ajv.addKeyword("requiresRole");
+
+const __filename = fileURLToPath(import.meta.url);
 
 export async function getValidators(): Promise<Map<string, Ajv.ValidateFunction<unknown>>> {
     const tachyonProtocolPackagePath = path.resolve(__filename, "../../node_modules/tachyon-protocol/dist");
