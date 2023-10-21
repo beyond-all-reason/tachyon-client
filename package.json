@@ -1,6 +1,6 @@
 {
   "name": "tachyon-client",
-  "version": "9.0.3",
+  "version": "9.0.4",
   "description": "Tachyon client written in TypeScript",
   "author": "Jazcash",
   "license": "ISC",
