@@ -1,14 +1,19 @@
-import { ValidateFunction } from "ajv";
+import { createRequire } from "node:module";
+
 import chalk from "chalk";
 import { Signal } from "jaz-ts-utils";
+const require = createRequire(import.meta.url);
 // eslint-disable-next-line no-restricted-imports
-import type { RequestData, RequestEndpointId, ResponseEndpointId, ResponseType, ServiceId } from "tachyon-protocol";
-import tachyonMeta from "tachyon-protocol/dist/meta.json" assert { type: "json" };
+import {
+    getValidator,
+    type RequestData,
+    type RequestEndpointId,
+    type ResponseEndpointId,
+    type ResponseType,
+    type ServiceId,
+} from "tachyon-protocol";
 import { ClientOptions, WebSocket } from "ws";
-
-import { getValidators } from "@/validators.js";
-
-let validators: Map<string, ValidateFunction> = new Map();
+const tachyonPackage = require("tachyon-protocol/package.json");
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
@@ -22,12 +27,12 @@ export class TachyonClient {
     protected responseSignals: Map<string, Signal> = new Map();
     protected config: TachyonClientOptions;
 
-    protected constructor(config: TachyonClientOptions) {
+    constructor(config: TachyonClientOptions) {
         this.config = config;
 
         const protocol = config.ssl ? "wss" : "ws";
         this.socket = new WebSocket(
-            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonMeta.version}`,
+            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonPackage.version}`,
             {
                 ...config,
             }
@@ -37,7 +42,7 @@ export class TachyonClient {
             if (this.config.logging) {
                 console.log(
                     chalk.green(
-                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonMeta.version}`
+                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonPackage.version}`
                     )
                 );
             }
@@ -45,26 +50,30 @@ export class TachyonClient {
 
         this.socket.on("message", (message) => {
             const response = JSON.parse(message.toString());
-            const signal = this.responseSignals.get(response.command);
-
-            const validator = validators.get(response.command);
-
-            if (!validator) {
-                throw new Error(`No response validator found for ${response.command}`);
-            }
-
-            const isValid = validator(response);
-            if (!isValid) {
-                console.error(validator.errors);
-                throw new Error(`Response validation failed for ${response.command}`);
-            }
-
-            if (signal) {
-                signal.dispatch(response);
-            }
 
             if (this.config.logging) {
                 console.log("RESPONSE", response);
+            }
+
+            const commandId: string = response.command;
+            if (!commandId || typeof commandId !== "string") {
+                throw new Error(`Invalid command received`);
+            }
+
+            const validator = getValidator(response);
+            const isValid = validator(response);
+            if (!isValid) {
+                console.error(`Command validation failed for ${commandId}`);
+                if (validator.errors) {
+                    for (const error of validator.errors) {
+                        console.error(error);
+                    }
+                }
+            }
+
+            const signal = this.responseSignals.get(response.command);
+            if (signal) {
+                signal.dispatch(response);
             }
         });
 
@@ -72,17 +81,11 @@ export class TachyonClient {
             if (command.status === "success" && command.data.versionParity !== "match") {
                 console.warn(
                     chalk.yellow(
-                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
+                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonPackage.version}. Mismatch type: ${command.data.versionParity}`
                     )
                 );
             }
         });
-    }
-
-    public static async create(config: TachyonClientOptions) {
-        validators = await getValidators();
-
-        return new TachyonClient(config);
     }
 
     public request<S extends ServiceId, E extends RequestEndpointId<S> & ResponseEndpointId<S>>(
@@ -91,21 +94,21 @@ export class TachyonClient {
         data: RequestData<S, E>
     ): Promise<ResponseType<S, E>> {
         return new Promise((resolve) => {
+            const commandId = `${serviceId}/${endpointId}/request`;
             const request = {
-                command: `${serviceId}/${endpointId}/request`,
+                command: commandId,
                 data,
             };
 
-            const validator = validators.get(`${serviceId}/${endpointId}/request`);
-
-            if (!validator) {
-                throw new Error(`No request validator found for ${serviceId}/${endpointId}`);
-            }
-
+            const validator = getValidator(request);
             const isValid = validator(request);
             if (!isValid) {
-                console.error(validator.errors);
-                throw new Error(`Request validation failed for ${serviceId}/${endpointId}`);
+                console.error(`Command validation failed for ${commandId}`);
+                if (validator.errors) {
+                    for (const error of validator.errors) {
+                        console.error(error);
+                    }
+                }
             }
 
             this.on(serviceId, endpointId).addOnce((data) => {
