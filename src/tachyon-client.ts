@@ -1,8 +1,5 @@
-import { createRequire } from "node:module";
-
 import chalk from "chalk";
 import { Signal } from "jaz-ts-utils";
-const require = createRequire(import.meta.url);
 // eslint-disable-next-line no-restricted-imports
 import {
     getValidator,
@@ -11,9 +8,9 @@ import {
     type ResponseEndpointId,
     type ResponseType,
     type ServiceId,
+    tachyonMeta,
 } from "tachyon-protocol";
 import { ClientOptions, WebSocket } from "ws";
-const tachyonPackage = require("tachyon-protocol/package.json");
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
@@ -32,7 +29,7 @@ export class TachyonClient {
 
         const protocol = config.ssl ? "wss" : "ws";
         this.socket = new WebSocket(
-            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonPackage.version}`,
+            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonMeta.version}`,
             {
                 ...config,
             }
@@ -42,7 +39,7 @@ export class TachyonClient {
             if (this.config.logging) {
                 console.log(
                     chalk.green(
-                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonPackage.version}`
+                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonMeta.version}`
                     )
                 );
             }
@@ -81,7 +78,7 @@ export class TachyonClient {
             if (command.status === "success" && command.data.versionParity !== "match") {
                 console.warn(
                     chalk.yellow(
-                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonPackage.version}. Mismatch type: ${command.data.versionParity}`
+                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
                     )
                 );
             }
