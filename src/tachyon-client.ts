@@ -144,4 +144,20 @@ export class TachyonClient {
             });
         });
     }
+
+    public connected() {
+        return new Promise<void>((resolve) => {
+            if (this.socket.readyState === this.socket.OPEN) {
+                resolve();
+            } else {
+                this.socket.on("open", async () => {
+                    resolve();
+                });
+            }
+        });
+    }
+
+    public isConnected() {
+        return this.socket.readyState === this.socket.OPEN;
+    }
 }
