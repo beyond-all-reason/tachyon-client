@@ -20,9 +20,10 @@ export interface TachyonClientOptions extends ClientOptions {
 }
 
 export class TachyonClient {
-    protected socket: WebSocket;
+    public socket: WebSocket;
+    public config: TachyonClientOptions;
+
     protected responseSignals: Map<string, Signal> = new Map();
-    protected config: TachyonClientOptions;
 
     constructor(config: TachyonClientOptions) {
         this.config = config;
@@ -159,5 +160,9 @@ export class TachyonClient {
 
     public isConnected() {
         return this.socket.readyState === this.socket.OPEN;
+    }
+
+    public disconnect() {
+        this.socket.close();
     }
 }
