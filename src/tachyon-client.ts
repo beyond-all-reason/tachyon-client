@@ -14,74 +14,93 @@ import { ClientOptions, WebSocket } from "ws";
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
-    port: number;
+    port?: number;
     ssl?: boolean;
     logging?: boolean;
 }
 
 export class TachyonClient {
-    public socket: WebSocket;
+    public socket?: WebSocket;
     public config: TachyonClientOptions;
 
     protected responseSignals: Map<string, Signal> = new Map();
 
     constructor(config: TachyonClientOptions) {
         this.config = config;
+    }
 
-        const protocol = config.ssl ? "wss" : "ws";
-        this.socket = new WebSocket(
-            `${protocol}://${config.host}:${config.port}?tachyonVersion=${tachyonMeta.version}`,
-            {
-                ...config,
-            }
-        );
-
-        this.socket.on("open", async () => {
-            if (this.config.logging) {
-                console.log(
-                    chalk.green(
-                        `Connected to ${config.host}:${config.port} using Tachyon Version ${tachyonMeta.version}`
-                    )
-                );
-            }
-        });
-
-        this.socket.on("message", (message) => {
-            const response = JSON.parse(message.toString());
-
-            if (this.config.logging) {
-                console.log("RESPONSE", response);
-            }
-
-            const commandId: string = response.command;
-            if (!commandId || typeof commandId !== "string") {
-                throw new Error(`Invalid command received`);
-            }
-
-            const validator = getValidator(response);
-            const isValid = validator(response);
-            if (!isValid) {
-                console.error(`Command validation failed for ${commandId}`);
-                if (validator.errors) {
-                    for (const error of validator.errors) {
-                        console.error(error);
+    public connect() {
+        return new Promise<void>((resolve) => {
+            if (this.socket && this.socket.readyState === this.socket.OPEN) {
+                resolve();
+            } else {
+                const protocol = this.config.ssl ? "wss" : "ws";
+                this.socket = new WebSocket(
+                    `${protocol}://${this.config.host}${this.config.port ? ":" + this.config.port : ""}`,
+                    tachyonMeta.version,
+                    {
+                        ...this.config,
                     }
-                }
-            }
-
-            const signal = this.responseSignals.get(response.command);
-            if (signal) {
-                signal.dispatch(response);
-            }
-        });
-
-        this.on("system", "version").add((command) => {
-            if (command.status === "success" && command.data.versionParity !== "match") {
-                console.warn(
-                    chalk.yellow(
-                        `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
-                    )
                 );
+
+                this.socket.on("message", (message) => {
+                    const response = JSON.parse(message.toString());
+
+                    if (this.config.logging) {
+                        console.log("RESPONSE", response);
+                    }
+
+                    const commandId: string = response.command;
+                    if (!commandId || typeof commandId !== "string") {
+                        throw new Error(`Invalid command received`);
+                    }
+
+                    const validator = getValidator(response);
+                    const isValid = validator(response);
+                    if (!isValid) {
+                        console.error(`Command validation failed for ${commandId}`);
+                        if (validator.errors) {
+                            for (const error of validator.errors) {
+                                console.error(error);
+                            }
+                        }
+                    }
+
+                    const signal = this.responseSignals.get(response.command);
+                    if (signal) {
+                        signal.dispatch(response);
+                    }
+                });
+
+                this.on("system", "version").add((command) => {
+                    if (command.status === "success" && command.data.versionParity !== "match") {
+                        console.warn(
+                            chalk.yellow(
+                                `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
+                            )
+                        );
+                    }
+                });
+
+                this.socket.on("open", async () => {
+                    if (this.config.logging) {
+                        console.log(
+                            chalk.green(
+                                `Connected to ${this.config.host}:${this.config.port} using Tachyon Version ${tachyonMeta.version}`
+                            )
+                        );
+                    }
+
+                    resolve();
+                });
+
+                this.socket.on("close", () => {
+                    console.log(chalk.red(`Disconnected from ${this.config.host}:${this.config.port}`));
+
+                    this.responseSignals.forEach((signal) => signal.disposeAll());
+                    this.responseSignals = new Map();
+                    this.socket = undefined;
+                });
             }
         });
     }
@@ -113,7 +132,7 @@ export class TachyonClient {
                 resolve(data);
             });
 
-            this.socket.send(JSON.stringify(request));
+            this.socket?.send(JSON.stringify(request));
 
             if (this.config.logging) {
                 console.log("REQUEST", request);
@@ -146,23 +165,15 @@ export class TachyonClient {
         });
     }
 
-    public connected() {
-        return new Promise<void>((resolve) => {
-            if (this.socket.readyState === this.socket.OPEN) {
-                resolve();
-            } else {
-                this.socket.on("open", async () => {
-                    resolve();
-                });
-            }
-        });
-    }
+    public isConnected(): boolean {
+        if (!this.socket) {
+            return false;
+        }
 
-    public isConnected() {
         return this.socket.readyState === this.socket.OPEN;
     }
 
     public disconnect() {
-        this.socket.close();
+        this.socket?.close();
     }
 }
