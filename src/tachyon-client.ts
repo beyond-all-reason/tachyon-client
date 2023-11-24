@@ -30,7 +30,7 @@ export class TachyonClient {
     }
 
     public connect() {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
             if (this.socket && this.socket.readyState === this.socket.OPEN) {
                 resolve();
             } else {
@@ -100,6 +100,10 @@ export class TachyonClient {
                     this.responseSignals.forEach((signal) => signal.disposeAll());
                     this.responseSignals = new Map();
                     this.socket = undefined;
+                });
+
+                this.socket.on("error", (err) => {
+                    reject(err);
                 });
             }
         });
