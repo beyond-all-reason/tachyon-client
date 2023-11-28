@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { Signal } from "jaz-ts-utils";
+import fetch from "node-fetch";
 // eslint-disable-next-line no-restricted-imports
 import {
     getValidator,
@@ -11,6 +12,8 @@ import {
     tachyonMeta,
 } from "tachyon-protocol";
 import { ClientOptions, WebSocket } from "ws";
+
+import { SteamSessionTicketResponse } from "@/model/steam-session-ticket.js";
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
@@ -179,5 +182,36 @@ export class TachyonClient {
 
     public disconnect() {
         this.socket?.close();
+    }
+
+    public async authenticateSteamSessionTicket(sessionToken: string): Promise<SteamSessionTicketResponse> {
+        const url = `http://${this.config.host}:${this.config.port}/steamauth?ticket=${sessionToken}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        return data as SteamSessionTicketResponse;
+    }
+
+    public async register(email: string, password: string, displayName: string) {
+        return fetch(`http://${this.config.host}:${this.config.port}/register`, {
+            method: "post",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email,
+                password,
+                displayName,
+            }),
+        });
+    }
+
+    public async login() {
+        // return fetch(`http://${this.config.host}:${this.config.port}/register`, {
+        //     method: "post",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //         email,
+        //         password,
+        //         displayName,
+        //     }),
+        // });
     }
 }
