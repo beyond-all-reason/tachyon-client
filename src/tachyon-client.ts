@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { Signal } from "jaz-ts-utils";
 import fetch from "node-fetch";
+import { generators, Issuer } from "openid-client";
 // eslint-disable-next-line no-restricted-imports
 import {
     getValidator,
@@ -14,6 +15,7 @@ import {
 import { ClientOptions, WebSocket } from "ws";
 
 import { SteamSessionTicketResponse } from "@/model/steam-session-ticket.js";
+import { RedirectHandler } from "@/oauth2-redirect-handler.js";
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
@@ -203,15 +205,43 @@ export class TachyonClient {
         });
     }
 
-    public async login() {
-        // return fetch(`http://${this.config.host}:${this.config.port}/register`, {
-        //     method: "post",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({
-        //         email,
-        //         password,
-        //         displayName,
-        //     }),
-        // });
+    private get serverBaseUrl() {
+        const schema = this.config.ssl ? "https" : "http";
+        const port = this.config.port ? ":" + this.config.port : "";
+        return `${schema}://${this.config.host}${port}`;
+    }
+
+    public async login(signal: AbortSignal, openUrl: (url: string) => void) {
+        const issuer = await Issuer.discover(`${this.serverBaseUrl}/.well-known/oauth-authorization-server`);
+        const rh = new RedirectHandler(signal);
+        try {
+            const redirectUrl = await rh.getRedirectUrl();
+            const client = new issuer.Client({
+                client_id: "lobby",
+                client_secret: "", // Not needed for public clients.
+                redirect_uris: [redirectUrl],
+                response_types: ["code"],
+            });
+
+            const code_verifier = generators.codeVerifier();
+            const url = client.authorizationUrl({
+                scope: "lobby",
+                code_challenge: generators.codeChallenge(code_verifier),
+                code_challenge_method: "S256",
+            });
+            openUrl(url);
+
+            const callbackUrl = await rh.waitForCallback();
+            const params = client.callbackParams(callbackUrl);
+            const tokenSet = await client.oauthCallback(redirectUrl, params, {
+                code_verifier,
+                response_type: "code",
+            });
+
+            // TODO: Actually do something useful with the token.
+            console.log(tokenSet);
+        } finally {
+            rh.close();
+        }
     }
 }
