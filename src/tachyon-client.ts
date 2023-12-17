@@ -205,27 +205,30 @@ export class TachyonClient {
         });
     }
 
-    private get serverBaseUrl() {
+    private getServerBaseUrl() {
         const schema = this.config.ssl ? "https" : "http";
         const port = this.config.port ? ":" + this.config.port : "";
         return `${schema}://${this.config.host}${port}`;
     }
 
     public async login(signal: AbortSignal, openUrl: (url: string) => void) {
-        const issuer = await Issuer.discover(`${this.serverBaseUrl}/.well-known/oauth-authorization-server`);
+        const issuer = await Issuer.discover(`${this.getServerBaseUrl()}/oidc`);
         const rh = new RedirectHandler(signal);
         try {
-            const redirectUrl = await rh.getRedirectUrl();
+            const redirectUri = await rh.getRedirectUrl();
+            //const redirectUri = "https://oidcdebugger.com/debug";
+            //console.log(redirectUrl);
+
             const client = new issuer.Client({
-                client_id: "lobby",
-                client_secret: "", // Not needed for public clients.
-                redirect_uris: [redirectUrl],
+                client_id: "BAR Lobby",
+                client_secret: "fish",
+                redirect_uris: [redirectUri],
                 response_types: ["code"],
             });
 
             const code_verifier = generators.codeVerifier();
             const url = client.authorizationUrl({
-                scope: "lobby",
+                scope: "openid lobby",
                 code_challenge: generators.codeChallenge(code_verifier),
                 code_challenge_method: "S256",
             });
@@ -233,15 +236,32 @@ export class TachyonClient {
 
             const callbackUrl = await rh.waitForCallback();
             const params = client.callbackParams(callbackUrl);
-            const tokenSet = await client.oauthCallback(redirectUrl, params, {
+            const tokenSet = await client.callback(redirectUri, params, {
                 code_verifier,
                 response_type: "code",
             });
 
-            // TODO: Actually do something useful with the token.
+            //  TODO: Actually do something useful with the token.
             console.log(tokenSet);
+
+            return tokenSet;
         } finally {
+            console.log("closed thing");
             rh.close();
         }
+    }
+
+    public async thing(token: string) {
+        const body = new URLSearchParams();
+        body.append("token", token);
+
+        return fetch(`${this.getServerBaseUrl()}/oidc/token/introspection`, {
+            method: "post",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: "Basic " + "idk",
+            },
+            body,
+        });
     }
 }

@@ -12,7 +12,7 @@ export class RedirectHandler {
     private error?: Error;
     private callbackUrl?: string;
 
-    constructor(signal?: AbortSignal, path = "/oauth2callback") {
+    constructor(signal?: AbortSignal, path = "/cb") {
         this.path = path;
 
         this.server = http.createServer((req, res) => this.handleRequest(req, res));
@@ -27,7 +27,7 @@ export class RedirectHandler {
         });
 
         this.server.listen({
-            port: 0,
+            port: 3006,
             host: "127.0.0.1", // We assume that IPv4 is always available
         });
     }
