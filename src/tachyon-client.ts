@@ -1,44 +1,39 @@
 import http from "node:http";
 
-import { generateCodeVerifier, OAuth2Client } from "@badgateway/oauth2-client";
-import chalk from "chalk";
+import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
+import { randomUUID } from "crypto";
 import { Signal } from "jaz-ts-utils";
-import fetch from "node-fetch";
 import open from "open";
 import {
+    EndpointId,
+    GenericRequestCommand,
     getValidator,
-    type RequestData,
-    type RequestEndpointId,
-    type ResponseEndpointId,
-    type ResponseType,
-    type ServiceId,
+    RequestData,
+    ResponseCommand,
+    ServiceId,
+    SuccessResponseData,
     tachyonMeta,
 } from "tachyon-protocol";
 import { SetOptional } from "type-fest";
 import { ClientOptions, WebSocket } from "ws";
 
-import { SteamSessionTicketResponse } from "@/model/steam-session-ticket.js";
-
-// https://www.rfc-editor.org/rfc/rfc8252
-
 export type LoginOptions = {
-    clientId: string;
-    clientSecret: string;
-    callbackUrl: string;
     /** An OAuth 2 access token. This should be stored and passed back here for subsequent logins. If the token is undefined or expired, the client will be prompted to authorise. */
-    //token?: TokenSet;
+    token?: OAuth2Token;
+    /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
+    clientId: string;
+    /** This client spawns a temporary http server during the authorization process in order to receive the auth code. https://www.rfc-editor.org/rfc/rfc8252#section-8.3 */
+    localCallbackUrl: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
     open: (url: string) => void;
     /** An abort signal which can be used to terminate the authentication process */
     abortSignal?: AbortSignal;
-    /** url path that serves as the root for /.well-known/openid-configuration, defaults to \/ */
-    authPath?: string;
 };
 
 const defaultLoginOptions = {
+    clientId: "tachyon_client",
     open: (url) => open(url),
-    callbackUrl: "http://127.0.0.1:3006/oauth2callback",
-    authPath: "/",
+    localCallbackUrl: "http://127.0.0.1:3006/oauth2callback",
 } satisfies Partial<LoginOptions>;
 
 export interface TachyonClientOptions extends ClientOptions {
@@ -58,26 +53,33 @@ export class TachyonClient {
         this.config = config;
     }
 
-    public connect() {
-        return new Promise<void>((resolve, reject) => {
+    public async connect(steamSessionTicket: string): Promise<SuccessResponseData<"system", "connected">> {
+        return new Promise((resolve, reject) => {
             if (this.socket && this.socket.readyState === this.socket.OPEN) {
-                resolve();
+                reject("already_connected");
             } else {
-                const protocol = this.config.ssl ? "wss" : "ws";
+                const wsPrefix = this.config.ssl ? "wss" : "ws";
+                let serverProtocol: string | undefined;
+
                 this.socket = new WebSocket(
-                    `${protocol}://${this.config.host}${this.config.port ? ":" + this.config.port : ""}`,
-                    tachyonMeta.version,
+                    `${wsPrefix}://${this.getServerBaseUrl()}`,
+                    `tachyon-${tachyonMeta.version}`,
                     {
                         ...this.config,
+                        headers: {
+                            authorization: `Basic ${steamSessionTicket}`,
+                        },
                     }
                 );
 
-                this.socket.on("message", (message) => {
+                this.socket.on("upgrade", (response) => {
+                    serverProtocol = response.headers["sec-websocket-protocol"];
+                });
+
+                this.socket.addEventListener("message", (message) => {
                     const response = JSON.parse(message.toString());
 
-                    if (this.config.logging) {
-                        console.log("RESPONSE", response);
-                    }
+                    this.log("RESPONSE", response);
 
                     const commandId: string = response.command;
                     if (!commandId || typeof commandId !== "string") {
@@ -101,54 +103,62 @@ export class TachyonClient {
                     }
                 });
 
-                this.on("system", "version").add((command) => {
-                    if (command.status === "success" && command.data.versionParity !== "match") {
-                        console.warn(
-                            chalk.yellow(
-                                `Tachyon protocol version mismatch. Server is serving ${command.data.tachyonVersion} but client is using ${tachyonMeta.version}. Mismatch type: ${command.data.versionParity}`
-                            )
-                        );
-                    }
+                this.socket.addEventListener("open", async () => {
+                    this.log(
+                        `Connected to http://${this.getServerBaseUrl()} using Tachyon Version ${tachyonMeta.version}`
+                    );
                 });
 
-                this.socket.on("open", async () => {
-                    if (this.config.logging) {
-                        console.log(
-                            chalk.green(
-                                `Connected to ${this.config.host}:${this.config.port} using Tachyon Version ${tachyonMeta.version}`
-                            )
-                        );
-                    }
-
-                    resolve();
-                });
-
-                this.socket.on("close", () => {
-                    console.log(chalk.red(`Disconnected from ${this.config.host}:${this.config.port}`));
+                this.socket.addEventListener("close", (event) => {
+                    this.log(
+                        `Disconnected from http://${this.getServerBaseUrl()} (${event.reason.toString() ?? event.code})`
+                    );
 
                     this.responseSignals.forEach((signal) => signal.disposeAll());
-                    this.responseSignals = new Map();
+                    this.responseSignals.clear();
                     this.socket = undefined;
                 });
 
-                this.socket.on("error", (err) => {
-                    reject(err);
+                this.socket.addEventListener("error", (err) => {
+                    if (err instanceof Error && err.message === "Server sent an invalid subprotocol") {
+                        reject(
+                            `Tachyon server protocol version (${serverProtocol}) is incompatible with this client (tachyon-${tachyonMeta.version})`
+                        );
+                    } else if (err.message.includes("ECONNREFUSED")) {
+                        reject(`Could not connect to server at http://${this.getServerBaseUrl()}`);
+                    } else {
+                        reject(err);
+                    }
+                });
+
+                this.on("system", "connected").add((response) => {
+                    if (response.status === "success") {
+                        resolve(response.data);
+                    } else {
+                        reject(response.reason);
+                    }
                 });
             }
         });
     }
 
-    public request<S extends ServiceId, E extends RequestEndpointId<S> & ResponseEndpointId<S>>(
-        serviceId: S,
-        endpointId: E & string,
-        data: RequestData<S, E>
-    ): Promise<ResponseType<S, E>> {
+    public request<S extends ServiceId, E extends EndpointId<S>>(
+        ...args: RequestData<S, E> extends never
+            ? [serviceId: S, endpointId: E]
+            : [serviceId: S, endpointId: E, data: RequestData<S, E>]
+    ): Promise<ResponseCommand<S, E>> {
         return new Promise((resolve) => {
-            const commandId = `${serviceId}/${endpointId}/request`;
-            const request = {
-                command: commandId,
-                data,
-            };
+            const serviceId = args[0];
+            const endpointId = args[1];
+            const data = args[2];
+
+            const commandId = `${serviceId}/${endpointId as string}/request`;
+            const messageId = randomUUID();
+            const request: GenericRequestCommand = { commandId, messageId };
+
+            if (data) {
+                Object.assign(request, data);
+            }
 
             const validator = getValidator(request);
             const isValid = validator(request);
@@ -161,22 +171,22 @@ export class TachyonClient {
                 }
             }
 
-            this.on(serviceId, endpointId).addOnce((data) => {
-                resolve(data);
+            this.on(serviceId, endpointId).addOnce((response) => {
+                if (response.messageId === messageId) {
+                    resolve(response);
+                }
             });
 
             this.socket?.send(JSON.stringify(request));
 
-            if (this.config.logging) {
-                console.log("REQUEST", request);
-            }
+            this.log("REQUEST", request);
         });
     }
 
-    public on<S extends ServiceId, E extends ResponseEndpointId<S>>(
+    public on<S extends ServiceId, E extends EndpointId<S>>(
         serviceId: S,
         endpointId: E
-    ): Signal<ResponseType<S, E>> {
+    ): Signal<ResponseCommand<S, E>> {
         const commandId = `${serviceId}/${endpointId.toString()}/response`;
         let signal = this.responseSignals.get(commandId);
         if (!signal) {
@@ -187,10 +197,10 @@ export class TachyonClient {
         return signal;
     }
 
-    public waitFor<S extends ServiceId, E extends ResponseEndpointId<S>>(
+    public waitFor<S extends ServiceId, E extends EndpointId<S>>(
         serviceId: S,
         endpointId: E
-    ): Promise<ResponseType<S, E>> {
+    ): Promise<ResponseCommand<S, E>> {
         return new Promise((resolve) => {
             this.on(serviceId, endpointId).addOnce((data) => {
                 resolve(data);
@@ -210,83 +220,69 @@ export class TachyonClient {
         this.socket?.close();
     }
 
-    public async authenticateSteamSessionTicket(sessionToken: string): Promise<SteamSessionTicketResponse> {
-        const url = `${this.getServerBaseUrl()}/steamauth?ticket=${sessionToken}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        return data as SteamSessionTicketResponse;
+    public getServerBaseUrl() {
+        const port = this.config.port ? ":" + this.config.port : "";
+        return `${this.config.host}${port}`;
     }
 
-    public async auth(optionsArg: SetOptional<LoginOptions, keyof typeof defaultLoginOptions>) {
+    public async auth(optionsArg?: SetOptional<LoginOptions, keyof typeof defaultLoginOptions>): Promise<OAuth2Token> {
         const options: LoginOptions = { ...defaultLoginOptions, ...optionsArg };
 
+        // https://github.com/badgateway/oauth2-client
+
         const client = new OAuth2Client({
-            server: this.getServerBaseUrl(),
+            server: `http://${this.getServerBaseUrl()}`, // TODO: https
             clientId: options.clientId,
-            authorizationEndpoint: `${this.getServerBaseUrl()}/oauth/authorize`,
-            tokenEndpoint: `${this.getServerBaseUrl()}/oauth/access_token`,
+            authorizationEndpoint: "/authorize",
+            tokenEndpoint: "/token",
         });
+
+        if (options.token) {
+            if (options.token.expiresAt && Date.now() > options.token.expiresAt) {
+                this.log("Access token expired");
+                if (options.token.refreshToken) {
+                    this.log("Fetching refresh token");
+                    return client.refreshToken(options.token);
+                } else {
+                    this.log("No refresh token available");
+                }
+            } else {
+                this.log("Using existing token");
+            }
+            return options.token;
+        }
+
+        this.log("Getting fresh access token - User auth required");
 
         const codeVerifier = await generateCodeVerifier();
 
         const authUrl = await client.authorizationCode.getAuthorizeUri({
-            redirectUri: options.callbackUrl,
+            redirectUri: options.localCallbackUrl,
             codeVerifier,
+            scope: ["tachyon.lobby"],
         });
 
         options.open(authUrl);
 
-        // const codeVerifier = await client.generateCodeVerifierAsync();
+        const callbackRequestUrl = await this.authCallback(options.localCallbackUrl, options.abortSignal);
 
-        // const authUrl = client.generateAuthUrl({
-        //     scope: "openid",
-        //     code_challenge_method: CodeChallengeMethod.S256,
-        //     code_challenge: codeVerifier.codeChallenge,
-        // });
+        const code = callbackRequestUrl.searchParams.get("code")!;
 
-        const callbackRequestUrl = await this.authCallback(options.callbackUrl, options.abortSignal);
+        const token = await client.authorizationCode.getToken({
+            code,
+            redirectUri: options.localCallbackUrl,
+            codeVerifier,
+        });
 
-        console.log(callbackRequestUrl);
-
-        //const token = await client.getToken()
-
-        //const callbackRequestUrl
-
-        // const issuer = await Issuer.discover(
-        //     `${this.getServerBaseUrl()}${options.authPath}.well-known/oauth-configuration`
-        // );
-
-        // const client = new issuer.Client({
-        //     client_id: options.clientId,
-        //     client_secret: options.clientSecret,
-        //     redirect_uris: [options.callbackUrl],
-        //     response_types: ["code"],
-        // });
-
-        // const code_verifier = generators.codeVerifier();
-        // const url = client.authorizationUrl({
-        //     scope: "openid",
-        //     code_challenge: generators.codeChallenge(code_verifier),
-        //     code_challenge_method: "S256",
-        // });
-
-        // options.open(url);
-
-        // const callbackRequestUrl = await this.authCallback(options.callbackUrl, options.abortSignal);
-
-        // const params = client.callbackParams(callbackRequestUrl);
-        // const tokenSet = await client.callback(options.callbackUrl, params, {
-        //     code_verifier,
-        //     response_type: "code",
-        // });
-
-        // return tokenSet;
+        return token;
     }
 
-    protected authCallback(callbackUrl: string, abortSignal?: AbortSignal) {
+    // https://www.rfc-editor.org/rfc/rfc8252#section-8.3
+    // https://datatracker.ietf.org/doc/html/rfc8252#section-7.3
+    protected authCallback(callbackUrl: string, abortSignal?: AbortSignal): Promise<URL> {
         const url = new URL(callbackUrl);
 
-        return new Promise<string>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const server = http.createServer();
             server.addListener("request", (req, res) => {
                 if (req.url) {
@@ -295,7 +291,7 @@ export class TachyonClient {
                     if (!reqUrl.searchParams.get("error")) {
                         res.writeHead(200, { "Content-Type": "text/plain" });
                         res.end("Authentication succeeded, you may close this window.");
-                        resolve(req.url);
+                        resolve(reqUrl);
                     } else {
                         res.writeHead(400, { "Content-Type": "text/plain" });
                         res.end(
@@ -324,9 +320,10 @@ export class TachyonClient {
         });
     }
 
-    protected getServerBaseUrl() {
-        const schema = this.config.ssl ? "https" : "http";
-        const port = this.config.port ? ":" + this.config.port : "";
-        return `${schema}://${this.config.host}${port}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected log(message?: any, ...optionalParams: any[]) {
+        if (this.config.logging) {
+            console.log(message, ...optionalParams);
+        }
     }
 }
