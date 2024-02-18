@@ -1,5 +1,3 @@
-import http from "node:http";
-
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { randomUUID } from "crypto";
 import { Signal } from "jaz-ts-utils";
@@ -17,13 +15,13 @@ import {
 import { SetOptional } from "type-fest";
 import { ClientOptions, WebSocket } from "ws";
 
+import { RedirectHandler } from "@/oauth2-redirect-handler.js";
+
 export type LoginOptions = {
     /** An OAuth 2 access token. This should be stored and passed back here for subsequent logins. If the token is undefined or expired, the client will be prompted to authorise. */
     token?: OAuth2Token;
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
-    /** This client spawns a temporary http server during the authorization process in order to receive the auth code. https://www.rfc-editor.org/rfc/rfc8252#section-8.3 */
-    localCallbackUrl: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
     open: (url: string) => void;
     /** An abort signal which can be used to terminate the authentication process */
@@ -33,7 +31,6 @@ export type LoginOptions = {
 const defaultLoginOptions = {
     clientId: "tachyon_client",
     open: (url) => open(url),
-    localCallbackUrl: "http://127.0.0.1:3006/oauth2callback",
 } satisfies Partial<LoginOptions>;
 
 export interface TachyonClientOptions extends ClientOptions {
@@ -228,10 +225,13 @@ export class TachyonClient {
     public async auth(optionsArg?: SetOptional<LoginOptions, keyof typeof defaultLoginOptions>): Promise<OAuth2Token> {
         const options: LoginOptions = { ...defaultLoginOptions, ...optionsArg };
 
-        // https://github.com/badgateway/oauth2-client
+        const redirectHandler = new RedirectHandler(options.abortSignal);
+        const redirectUri = await redirectHandler.getRedirectUrl();
+
+        console.log(redirectUri);
 
         const client = new OAuth2Client({
-            server: `http://${this.getServerBaseUrl()}`, // TODO: https
+            server: `http://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address
             clientId: options.clientId,
             authorizationEndpoint: "/authorize",
             tokenEndpoint: "/token",
@@ -257,67 +257,27 @@ export class TachyonClient {
         const codeVerifier = await generateCodeVerifier();
 
         const authUrl = await client.authorizationCode.getAuthorizeUri({
-            redirectUri: options.localCallbackUrl,
+            redirectUri: redirectUri,
             codeVerifier,
             scope: ["tachyon.lobby"],
         });
 
         options.open(authUrl);
 
-        const callbackRequestUrl = await this.authCallback(options.localCallbackUrl, options.abortSignal);
+        const callbackRequestUrl = await redirectHandler.waitForCallback();
 
-        const code = callbackRequestUrl.searchParams.get("code")!;
+        const code = callbackRequestUrl.searchParams.get("code");
+        if (!code) {
+            throw new Error("code parameter is missing from local callback request");
+        }
 
         const token = await client.authorizationCode.getToken({
             code,
-            redirectUri: options.localCallbackUrl,
+            redirectUri: redirectUri,
             codeVerifier,
         });
 
         return token;
-    }
-
-    // https://www.rfc-editor.org/rfc/rfc8252#section-8.3
-    // https://datatracker.ietf.org/doc/html/rfc8252#section-7.3
-    protected authCallback(callbackUrl: string, abortSignal?: AbortSignal): Promise<URL> {
-        const url = new URL(callbackUrl);
-
-        return new Promise((resolve, reject) => {
-            const server = http.createServer();
-            server.addListener("request", (req, res) => {
-                if (req.url) {
-                    const reqUrl = new URL(req.url, `http://${req.headers.host}`);
-
-                    if (!reqUrl.searchParams.get("error")) {
-                        res.writeHead(200, { "Content-Type": "text/plain" });
-                        res.end("Authentication succeeded, you may close this window.");
-                        resolve(reqUrl);
-                    } else {
-                        res.writeHead(400, { "Content-Type": "text/plain" });
-                        res.end(
-                            `Authentication callback failed: ${
-                                reqUrl.searchParams.get("error_description") || reqUrl.searchParams.get("error")
-                            }`
-                        );
-                        reject("auth failed");
-                    }
-                }
-
-                server.close();
-                server.closeAllConnections();
-            });
-
-            server.listen({
-                host: url.hostname,
-                port: url.port,
-            });
-
-            abortSignal?.addEventListener("abort", () => {
-                server.close();
-                server.closeAllConnections();
-                reject("aborted");
-            });
-        });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

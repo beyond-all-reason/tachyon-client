@@ -1,19 +1,23 @@
 // Helper for handling OAuth2 redirects from the native application.
 
-import http from "node:http";
-import { AddressInfo } from "node:net";
-
 // This is a very simple HTTP server that listens on a random port on localhost
 // and returns the URL that it is listening on. It also handles a request to
 // specific path and returns the URL that was requested.
+
+// https://www.rfc-editor.org/rfc/rfc8252#section-8.3
+// https://datatracker.ietf.org/doc/html/rfc8252#section-7.3
+
+import http from "node:http";
+import { AddressInfo } from "node:net";
+
 export class RedirectHandler {
     private path: string;
     private server: http.Server;
     private error?: Error;
-    private callbackUrl?: string;
+    private callbackUrl?: URL;
 
-    constructor(signal?: AbortSignal, path = "/cb") {
-        this.path = path;
+    constructor(signal?: AbortSignal) {
+        this.path = "/oauth2callback";
 
         this.server = http.createServer((req, res) => this.handleRequest(req, res));
 
@@ -27,7 +31,7 @@ export class RedirectHandler {
         });
 
         this.server.listen({
-            port: 3006,
+            port: 0,
             host: "127.0.0.1", // We assume that IPv4 is always available
         });
     }
@@ -59,18 +63,20 @@ export class RedirectHandler {
             res.end();
             return;
         }
-        this.callbackUrl = url.toString();
+        this.callbackUrl = url;
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end("You can close this window now.");
     }
 
-    public async waitForCallback(): Promise<string> {
+    public async waitForCallback(): Promise<URL> {
         if (this.error) {
             throw this.error;
         }
+
         if (!this.server.listening) {
             throw new Error("Server is not listening, how did you get redirect url?");
         }
+
         if (!this.callbackUrl) {
             await new Promise<void>((resolve, reject) => {
                 const handler = (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -86,6 +92,11 @@ export class RedirectHandler {
                 this.server.once("close", () => reject(new Error("Server closed before callback")));
             });
         }
-        return this.callbackUrl!;
+
+        if (!this.callbackUrl) {
+            throw new Error("Unknown error while waiting for callback");
+        }
+
+        return this.callbackUrl;
     }
 }
