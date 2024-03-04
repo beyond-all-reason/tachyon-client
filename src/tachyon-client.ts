@@ -1,6 +1,7 @@
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { randomUUID } from "crypto";
 import { Signal } from "jaz-ts-utils";
+import fetch from "node-fetch";
 import open from "open";
 import {
     EndpointId,
@@ -17,9 +18,11 @@ import { ClientOptions, WebSocket } from "ws";
 
 import { RedirectHandler } from "@/oauth2-redirect-handler.js";
 
-export type LoginOptions = {
-    /** An OAuth 2 access token. This should be stored and passed back here for subsequent logins. If the token is undefined or expired, the client will be prompted to authorise. */
+export type AuthOptions = {
+    /** An OAuth 2 access token. If a previous token has been generated and stored, it can be passed here to be validated or refreshed, if necessary */
     token?: OAuth2Token;
+    /** If using Steam auth, pass the Session Ticket returned from ISteamUser::GetAuthTicketForWebApi here */
+    steamSessionTicket?: string;
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
@@ -31,7 +34,7 @@ export type LoginOptions = {
 const defaultLoginOptions = {
     clientId: "tachyon_client",
     open: (url) => open(url),
-} satisfies Partial<LoginOptions>;
+} satisfies Partial<AuthOptions>;
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
@@ -50,7 +53,7 @@ export class TachyonClient {
         this.config = config;
     }
 
-    public async connect(steamSessionTicket: string): Promise<SuccessResponseData<"system", "connected">> {
+    public async connect(token: string): Promise<SuccessResponseData<"system", "connected">> {
         return new Promise((resolve, reject) => {
             if (this.socket && this.socket.readyState === this.socket.OPEN) {
                 reject("already_connected");
@@ -64,7 +67,7 @@ export class TachyonClient {
                     {
                         ...this.config,
                         headers: {
-                            authorization: `Basic ${steamSessionTicket}`,
+                            authorization: `Bearer ${token}`,
                         },
                     }
                 );
@@ -183,7 +186,7 @@ export class TachyonClient {
     public on<S extends ServiceId, E extends EndpointId<S>>(
         serviceId: S,
         endpointId: E
-    ): Signal<ResponseCommand<S, E>> {
+    ): Signal<ResponseCommand<S, E> & { messageId: string }> {
         const commandId = `${serviceId}/${endpointId.toString()}/response`;
         let signal = this.responseSignals.get(commandId);
         if (!signal) {
@@ -222,13 +225,15 @@ export class TachyonClient {
         return `${this.config.host}${port}`;
     }
 
-    public async auth(optionsArg?: SetOptional<LoginOptions, keyof typeof defaultLoginOptions>): Promise<OAuth2Token> {
-        const options: LoginOptions = { ...defaultLoginOptions, ...optionsArg };
+    public async auth(optionsArg?: SetOptional<AuthOptions, keyof typeof defaultLoginOptions>): Promise<OAuth2Token> {
+        const options: AuthOptions = { ...defaultLoginOptions, ...optionsArg };
+
+        if (options.steamSessionTicket) {
+            return this.steamAuth(options.steamSessionTicket, options.clientId, options.abortSignal);
+        }
 
         const redirectHandler = new RedirectHandler(options.abortSignal);
         const redirectUri = await redirectHandler.getRedirectUrl();
-
-        console.log(redirectUri);
 
         const client = new OAuth2Client({
             server: `http://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address
@@ -278,6 +283,31 @@ export class TachyonClient {
         });
 
         return token;
+    }
+
+    public async steamAuth(
+        steamSessionTicket: string,
+        clientId = defaultLoginOptions.clientId,
+        abortSignal?: AbortSignal
+    ): Promise<OAuth2Token> {
+        const tokenResponse = await fetch(`http://${this.getServerBaseUrl()}/token`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                grant_type: "urn:tachyon:params:oauth:grant-type:token-exchange",
+                client_id: clientId,
+                scope: "tachyon.lobby",
+                requested_token_type: "urn:tachyon:params:oauth:token-type:access_token",
+                subject_token_type: "urn:tachyon:oauth:token-type:steam_session_ticket",
+                subject_token: steamSessionTicket,
+            }),
+        });
+
+        const token = await tokenResponse.json();
+
+        return token as OAuth2Token;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
