@@ -296,11 +296,11 @@ export class TachyonClient {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
             body: new URLSearchParams({
-                grant_type: "urn:tachyon:params:oauth:grant-type:token-exchange",
+                grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
                 client_id: clientId,
                 scope: "tachyon.lobby",
-                requested_token_type: "urn:tachyon:params:oauth:token-type:access_token",
-                subject_token_type: "urn:tachyon:oauth:token-type:steam_session_ticket",
+                requested_token_type: "urn:ietf:params:oauth:token-type:access_token",
+                subject_token_type: "urn:ietf:oauth:token-type:steam_session_ticket",
                 subject_token: steamSessionTicket,
             }),
         });

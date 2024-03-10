@@ -62,5 +62,8 @@
   },
   "overrides": {
     "@sinclair/typebox": "$@sinclair/typebox"
+  },
+  "peerDependencies": {
+    "tachyon-protocol": "$tachyon-protocol"
   }
 }
