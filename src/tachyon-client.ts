@@ -2,7 +2,6 @@ import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oau
 import { randomUUID } from "crypto";
 import { Signal } from "jaz-ts-utils";
 import fetch from "node-fetch";
-import open from "open";
 import {
     EndpointId,
     GenericRequestCommand,
@@ -26,14 +25,13 @@ export type AuthOptions = {
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
-    open: (url: string) => void;
+    open?: (url: string) => void;
     /** An abort signal which can be used to terminate the authentication process */
     abortSignal?: AbortSignal;
 };
 
 const defaultLoginOptions = {
     clientId: "tachyon_client",
-    open: (url) => open(url),
 } satisfies Partial<AuthOptions>;
 
 export interface TachyonClientOptions extends ClientOptions {
@@ -267,7 +265,10 @@ export class TachyonClient {
             scope: ["tachyon.lobby"],
         });
 
-        options.open(authUrl);
+        if (!options.open) {
+            const open = await import("open");
+            await open.default(authUrl);
+        }
 
         const callbackRequestUrl = await redirectHandler.waitForCallback();
 
