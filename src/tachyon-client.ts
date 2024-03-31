@@ -15,6 +15,8 @@ import {
 import { SetOptional } from "type-fest";
 import { ClientOptions, WebSocket } from "ws";
 
+import { UserNotFoundError } from "@/model/errors.js";
+import { RegisterOptions } from "@/model/types.js";
 import { RedirectHandler } from "@/oauth2-redirect-handler.js";
 
 export type AuthOptions = {
@@ -25,7 +27,7 @@ export type AuthOptions = {
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
-    open?: (url: string) => void;
+    open?: (url: string) => Promise<unknown>;
     /** An abort signal which can be used to terminate the authentication process */
     abortSignal?: AbortSignal;
 };
@@ -75,11 +77,11 @@ export class TachyonClient {
                 });
 
                 this.socket.addEventListener("message", (message) => {
-                    const response = JSON.parse(message.toString());
+                    const response = JSON.parse(message.data.toString());
 
                     this.log("RESPONSE", response);
 
-                    const commandId: string = response.command;
+                    const commandId: string = response.commandId;
                     if (!commandId || typeof commandId !== "string") {
                         throw new Error(`Invalid command received`);
                     }
@@ -95,7 +97,7 @@ export class TachyonClient {
                         }
                     }
 
-                    const signal = this.responseSignals.get(response.command);
+                    const signal = this.responseSignals.get(response.commandId);
                     if (signal) {
                         signal.dispatch(response);
                     }
@@ -107,25 +109,35 @@ export class TachyonClient {
                     );
                 });
 
+                let disconnectReason: string;
+
                 this.socket.addEventListener("close", (event) => {
-                    this.log(
-                        `Disconnected from http://${this.getServerBaseUrl()} (${event.reason.toString() ?? event.code})`
-                    );
+                    if (!disconnectReason) {
+                        if (event.reason.toString()) {
+                            disconnectReason = event.reason.toString();
+                        } else if (event.code === 1006) {
+                            disconnectReason = "Lost connect to server";
+                        } else if (event.code) {
+                            disconnectReason = event.code.toString();
+                        } else {
+                            disconnectReason = "Unknown server error";
+                        }
+                    }
 
                     this.responseSignals.forEach((signal) => signal.disposeAll());
                     this.responseSignals.clear();
                     this.socket = undefined;
+
+                    reject(disconnectReason);
                 });
 
                 this.socket.addEventListener("error", (err) => {
-                    if (err instanceof Error && err.message === "Server sent an invalid subprotocol") {
-                        reject(
-                            `Tachyon server protocol version (${serverProtocol}) is incompatible with this client (tachyon-${tachyonMeta.version})`
-                        );
+                    if (err.message.includes("invalid subprotocol")) {
+                        disconnectReason = `Tachyon server protocol version (${serverProtocol}) is incompatible with this client (tachyon-${tachyonMeta.version})`;
                     } else if (err.message.includes("ECONNREFUSED")) {
-                        reject(`Could not connect to server at http://${this.getServerBaseUrl()}`);
+                        disconnectReason = `Could not connect to server at http://${this.getServerBaseUrl()}`;
                     } else {
-                        reject(err);
+                        disconnectReason = err.message;
                     }
                 });
 
@@ -267,8 +279,10 @@ export class TachyonClient {
 
         if (!options.open) {
             const open = await import("open");
-            await open.default(authUrl);
+            options.open = open.default;
         }
+
+        await options.open(authUrl);
 
         const callbackRequestUrl = await redirectHandler.waitForCallback();
 
@@ -306,9 +320,36 @@ export class TachyonClient {
             }),
         });
 
-        const token = await tokenResponse.json();
+        const obj = await tokenResponse.json();
 
-        return token as OAuth2Token;
+        if (this.isOauthToken(obj)) {
+            return obj;
+        } else if (this.isError(obj)) {
+            if (obj.message.includes("user_not_found")) {
+                throw new UserNotFoundError();
+            }
+
+            throw new Error(`HTTP ${tokenResponse.status} ${obj.error}: ${obj.message}`);
+        }
+
+        throw new Error("Error getting OAuth Token");
+    }
+
+    public async register(options: RegisterOptions) {
+        //if (options.steamSessionTicket) {
+        const registerResponse = await fetch(`http://${this.getServerBaseUrl()}/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+                username: options.username,
+                steamSessionTicket: options.steamSessionTicket,
+            }),
+        });
+
+        console.log(registerResponse.status);
+        //}
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,5 +357,13 @@ export class TachyonClient {
         if (this.config.logging) {
             console.log(message, ...optionalParams);
         }
+    }
+
+    protected isOauthToken(obj: unknown): obj is OAuth2Token {
+        return typeof obj === "object" && obj !== null && "access_token" in obj;
+    }
+
+    protected isError(obj: unknown): obj is { statusCode: number; error: string; message: string } {
+        return typeof obj === "object" && obj !== null && "error" in obj && "message" in obj;
     }
 }
