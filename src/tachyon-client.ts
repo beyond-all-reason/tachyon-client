@@ -1,7 +1,6 @@
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { randomUUID } from "crypto";
 import { Signal } from "jaz-ts-utils";
-import fetch from "node-fetch";
 import {
     EndpointId,
     GenericRequestCommand,
@@ -15,42 +14,54 @@ import {
 import { SetOptional } from "type-fest";
 import { ClientOptions, WebSocket } from "ws";
 
-import { UserNotFoundError } from "@/model/errors.js";
+import { UserNotFoundError } from "@/index.js";
 import { RegisterOptions } from "@/model/types.js";
 import { RedirectHandler } from "@/oauth2-redirect-handler.js";
+
+// test
 
 export type AuthOptions = {
     /** An OAuth 2 access token. If a previous token has been generated and stored, it can be passed here to be validated or refreshed, if necessary */
     token?: OAuth2Token;
     /** If using Steam auth, pass the Session Ticket returned from ISteamUser::GetAuthTicketForWebApi here */
     steamSessionTicket?: string;
-    /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
-    clientId: string;
     /** Specify a method to open the authentication url, defaults to using https://www.npmjs.com/package/open */
     open?: (url: string) => Promise<unknown>;
     /** An abort signal which can be used to terminate the authentication process */
     abortSignal?: AbortSignal;
 };
 
-const defaultLoginOptions = {
-    clientId: "tachyon_client",
-} satisfies Partial<AuthOptions>;
+const defaultLoginOptions = {} satisfies Partial<AuthOptions>;
 
 export interface TachyonClientOptions extends ClientOptions {
     host: string;
     port?: number;
     ssl?: boolean;
     logging?: boolean;
+    /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
+    clientId: string;
 }
+
+const defaultTachyonClientOptions = {
+    clientId: "tachyon_client",
+} satisfies Partial<TachyonClientOptions>;
 
 export class TachyonClient {
     public socket?: WebSocket;
     public config: TachyonClientOptions;
 
     protected responseSignals: Map<string, Signal> = new Map();
+    protected oauthClient: OAuth2Client;
 
-    constructor(config: TachyonClientOptions) {
-        this.config = config;
+    constructor(config: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
+        this.config = { ...defaultTachyonClientOptions, ...config };
+
+        this.oauthClient = new OAuth2Client({
+            server: `http://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address,
+            clientId: config.clientId ?? "tachyon_client",
+            authorizationEndpoint: "/authorize",
+            tokenEndpoint: "/token",
+        });
     }
 
     public async connect(token: string): Promise<SuccessResponseData<"system", "connected">> {
@@ -239,25 +250,18 @@ export class TachyonClient {
         const options: AuthOptions = { ...defaultLoginOptions, ...optionsArg };
 
         if (options.steamSessionTicket) {
-            return this.steamAuth(options.steamSessionTicket, options.clientId, options.abortSignal);
+            return this.steamAuth(options.steamSessionTicket, options.abortSignal);
         }
 
         const redirectHandler = new RedirectHandler(options.abortSignal);
         const redirectUri = await redirectHandler.getRedirectUrl();
-
-        const client = new OAuth2Client({
-            server: `http://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address
-            clientId: options.clientId,
-            authorizationEndpoint: "/authorize",
-            tokenEndpoint: "/token",
-        });
 
         if (options.token) {
             if (options.token.expiresAt && Date.now() > options.token.expiresAt) {
                 this.log("Access token expired");
                 if (options.token.refreshToken) {
                     this.log("Fetching refresh token");
-                    return client.refreshToken(options.token);
+                    return this.oauthClient.refreshToken(options.token);
                 } else {
                     this.log("No refresh token available");
                 }
@@ -271,7 +275,7 @@ export class TachyonClient {
 
         const codeVerifier = await generateCodeVerifier();
 
-        const authUrl = await client.authorizationCode.getAuthorizeUri({
+        const authUrl = await this.oauthClient.authorizationCode.getAuthorizeUri({
             redirectUri: redirectUri,
             codeVerifier,
             scope: ["tachyon.lobby"],
@@ -291,7 +295,7 @@ export class TachyonClient {
             throw new Error("code parameter is missing from local callback request");
         }
 
-        const token = await client.authorizationCode.getToken({
+        const token = await this.oauthClient.authorizationCode.getToken({
             code,
             redirectUri: redirectUri,
             codeVerifier,
@@ -300,19 +304,15 @@ export class TachyonClient {
         return token;
     }
 
-    public async steamAuth(
-        steamSessionTicket: string,
-        clientId = defaultLoginOptions.clientId,
-        abortSignal?: AbortSignal
-    ): Promise<OAuth2Token> {
-        const tokenResponse = await fetch(`http://${this.getServerBaseUrl()}/token`, {
+    public async steamAuth(steamSessionTicket: string, abortSignal?: AbortSignal): Promise<OAuth2Token> {
+        const response = await fetch(`http://${this.getServerBaseUrl()}/token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
             body: new URLSearchParams({
                 grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
-                client_id: clientId,
+                client_id: this.config.clientId,
                 scope: "tachyon.lobby",
                 requested_token_type: "urn:ietf:params:oauth:token-type:access_token",
                 subject_token_type: "urn:ietf:oauth:token-type:steam_session_ticket",
@@ -320,16 +320,20 @@ export class TachyonClient {
             }),
         });
 
-        const obj = await tokenResponse.json();
+        const obj = await response.json();
 
-        if (this.isOauthToken(obj)) {
-            return obj;
+        if (this.isTokenResponse(obj)) {
+            return {
+                accessToken: obj.access_token,
+                expiresAt: obj.expires_in ? Date.now() + obj.expires_in * 1000 : null,
+                refreshToken: obj.refresh_token ?? null,
+            };
         } else if (this.isError(obj)) {
             if (obj.message.includes("user_not_found")) {
                 throw new UserNotFoundError();
             }
 
-            throw new Error(`HTTP ${tokenResponse.status} ${obj.error}: ${obj.message}`);
+            throw new Error(`HTTP ${response.status} ${obj.error}: ${obj.message}`);
         }
 
         throw new Error("Error getting OAuth Token");
@@ -359,11 +363,13 @@ export class TachyonClient {
         }
     }
 
-    protected isOauthToken(obj: unknown): obj is OAuth2Token {
-        return typeof obj === "object" && obj !== null && "access_token" in obj;
-    }
-
     protected isError(obj: unknown): obj is { statusCode: number; error: string; message: string } {
         return typeof obj === "object" && obj !== null && "error" in obj && "message" in obj;
+    }
+
+    protected isTokenResponse(
+        obj: unknown
+    ): obj is { access_token: string; expires_in: number; refresh_token?: string; scope?: string } {
+        return typeof obj === "object" && obj !== null && "access_token" in obj;
     }
 }
