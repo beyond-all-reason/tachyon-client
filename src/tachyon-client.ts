@@ -127,7 +127,7 @@ export class TachyonClient {
                         if (event.reason.toString()) {
                             disconnectReason = event.reason.toString();
                         } else if (event.code === 1006) {
-                            disconnectReason = "Lost connect to server";
+                            disconnectReason = "Lost connection to server";
                         } else if (event.code) {
                             disconnectReason = event.code.toString();
                         } else {
