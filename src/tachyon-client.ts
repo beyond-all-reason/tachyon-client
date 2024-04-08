@@ -87,7 +87,7 @@ export class TachyonClient {
                     serverProtocol = response.headers["sec-websocket-protocol"];
                 });
 
-                this.socket.addEventListener("message", (message) => {
+                this.socket.addEventListener("message", async (message) => {
                     const response = JSON.parse(message.data.toString());
 
                     this.log("RESPONSE", response);
@@ -97,7 +97,7 @@ export class TachyonClient {
                         throw new Error(`Invalid command received`);
                     }
 
-                    const validator = getValidator(response);
+                    const validator = await getValidator(response);
                     const isValid = validator(response);
                     if (!isValid) {
                         console.error(`Command validation failed for ${commandId}`);
@@ -163,44 +163,44 @@ export class TachyonClient {
         });
     }
 
-    public request<S extends ServiceId, E extends EndpointId<S>>(
+    public async request<S extends ServiceId, E extends EndpointId<S>>(
         ...args: RequestData<S, E> extends never
             ? [serviceId: S, endpointId: E]
             : [serviceId: S, endpointId: E, data: RequestData<S, E>]
     ): Promise<ResponseCommand<S, E>> {
-        return new Promise((resolve) => {
-            const serviceId = args[0];
-            const endpointId = args[1];
-            const data = args[2];
+        const serviceId = args[0];
+        const endpointId = args[1];
+        const data = args[2];
 
-            const commandId = `${serviceId}/${endpointId as string}/request`;
-            const messageId = randomUUID();
-            const request: GenericRequestCommand = { commandId, messageId };
+        const commandId = `${serviceId}/${endpointId as string}/request`;
+        const messageId = randomUUID();
+        const request: GenericRequestCommand = { commandId, messageId };
+        const validator = await getValidator(request);
 
-            if (data) {
-                Object.assign(request, data);
-            }
+        if (data) {
+            Object.assign(request, data);
+        }
 
-            const validator = getValidator(request);
-            const isValid = validator(request);
-            if (!isValid) {
-                console.error(`Command validation failed for ${commandId}`);
-                if (validator.errors) {
-                    for (const error of validator.errors) {
-                        console.error(error);
-                    }
+        const isValid = validator(request);
+        if (!isValid) {
+            console.error(`Command validation failed for ${commandId}`);
+            if (validator.errors) {
+                for (const error of validator.errors) {
+                    console.error(error);
                 }
             }
+        }
 
+        this.socket?.send(JSON.stringify(request));
+
+        this.log("REQUEST", request);
+
+        return new Promise((resolve) => {
             this.on(serviceId, endpointId).addOnce((response) => {
                 if (response.messageId === messageId) {
                     resolve(response);
                 }
             });
-
-            this.socket?.send(JSON.stringify(request));
-
-            this.log("REQUEST", request);
         });
     }
 
