@@ -11,10 +11,26 @@
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "type": "module",
-  "exports": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": {
+        "default": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "import": {
+        "default": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
+    }
+  },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "files": [
     "dist"
@@ -26,7 +42,7 @@
     "chalk": "^4.1.2",
     "jaz-ts-utils": "^7.7.0",
     "open": "^9.1.0",
-    "tachyon-protocol": "^1.2.0",
+    "tachyon-protocol": "^1.6.4",
     "ws": "^8.13.0"
   },
   "devDependencies": {
