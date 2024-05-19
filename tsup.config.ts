@@ -8,4 +8,7 @@ export default defineConfig({
     shims: true,
     sourcemap: true,
     format: ["cjs", "esm"],
+    esbuildOptions: (options) => {
+        options.preserveSymlinks = true;
+    },
 });

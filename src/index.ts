@@ -3,18 +3,19 @@ import { randomUUID } from "node:crypto";
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { Signal } from "jaz-ts-utils";
 import {
-    EndpointId,
-    GenericRequestCommand,
-    GenericResponseCommand,
-    RequestData,
-    ResponseCommand,
-    ServiceId,
-    SuccessResponseData,
+    AutohostConnectedEvent,
+    GetCommandData,
+    GetCommandIds,
+    GetCommands,
+    SystemConnectedEvent,
+    TachyonCommand,
     tachyonMeta,
+    TachyonRequest,
+    TachyonResponse,
 } from "tachyon-protocol";
 import * as validators from "tachyon-protocol/validators";
 import { SetOptional } from "type-fest";
-import { ClientOptions, WebSocket } from "ws";
+import { ClientOptions, MessageEvent, WebSocket } from "ws";
 
 import { RedirectHandler } from "@/oauth2-redirect-handler.js";
 
@@ -29,32 +30,40 @@ export type AuthOptions = {
     abortSignal?: AbortSignal;
 };
 
-const defaultLoginOptions = {} satisfies Partial<AuthOptions>;
+type TachyonClientActor = "user" | "autohost";
 
-export interface TachyonClientOptions extends ClientOptions {
+export interface TachyonClientOptions<Actor extends TachyonClientActor> {
     host: string;
-    port?: number;
-    ssl?: boolean;
-    logging?: boolean;
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
+    /** Required request handlers. These need to be implemented as the other actor expects a response */
+    requestHandlers: {
+        [CommandId in GetCommandIds<"server", Actor, "request">]: (
+            data: GetCommandData<GetCommands<"server", Actor, "request", CommandId>>
+        ) => Promise<GetCommandData<GetCommands<Actor, "server", "response", CommandId>>>;
+    };
+    port?: number;
     clientSecret?: string;
+    ssl?: boolean;
+    logging?: boolean;
+    webSocketOptions?: ClientOptions;
 }
 
 const defaultTachyonClientOptions = {
     clientId: "tachyon_client",
-} satisfies Partial<TachyonClientOptions>;
+} satisfies Partial<TachyonClientOptions<TachyonClientActor>>;
 
-export class TachyonClient {
+export class TachyonClient<Actor extends TachyonClientActor> {
+    public readonly actorType: Actor;
     public socket?: WebSocket;
-    public config: TachyonClientOptions;
-    public onRequest: Signal<GenericRequestCommand> = new Signal();
-    public onResponse: Signal<GenericResponseCommand> = new Signal();
+    public config: TachyonClientOptions<Actor>;
 
-    protected responseSignals: Map<string, Signal> = new Map();
     protected oauthClient: OAuth2Client;
+    protected responseHandlers: Map<string, Signal<GetCommands<"server", Actor, "response">>> = new Map();
+    protected eventHandlers: Map<string, Signal<GetCommands<"server", Actor, "event">>> = new Map();
 
-    constructor(config: SetOptional<TachyonClientOptions, keyof typeof defaultTachyonClientOptions>) {
+    constructor(actorType: Actor, config: SetOptional<TachyonClientOptions<Actor>, keyof typeof defaultTachyonClientOptions>) {
+        this.actorType = actorType;
         this.config = { ...defaultTachyonClientOptions, ...config };
 
         this.oauthClient = new OAuth2Client({
@@ -66,13 +75,8 @@ export class TachyonClient {
         });
     }
 
-    public async connect(token: string, isAutohost: true): Promise<SuccessResponseData<"autohost", "connected">>;
-    public async connect(token: string, isAutohost: false): Promise<SuccessResponseData<"system", "connected">>;
-    public async connect(token: string): Promise<SuccessResponseData<"system", "connected">>;
-    public async connect(
-        token: string,
-        isAutohost = false
-    ): Promise<SuccessResponseData<"system", "connected"> | SuccessResponseData<"autohost", "connected">> {
+    public async connect(token: string): Promise<Actor extends "user" ? SystemConnectedEvent["data"] : AutohostConnectedEvent["data"]>;
+    public async connect(token: string): Promise<SystemConnectedEvent["data"] | AutohostConnectedEvent["data"]> {
         return new Promise((resolve, reject) => {
             if (this.socket && this.socket.readyState === this.socket.OPEN) {
                 reject("already_connected");
@@ -85,7 +89,7 @@ export class TachyonClient {
             let serverProtocol: string | undefined;
 
             this.socket = new WebSocket(address, `tachyon-${tachyonMeta.version}`, {
-                ...this.config,
+                ...this.config.webSocketOptions,
                 headers: {
                     authorization: `Bearer ${token}`,
                 },
@@ -103,41 +107,12 @@ export class TachyonClient {
                 serverProtocol = response.headers["sec-websocket-protocol"];
             });
 
-            this.socket.addEventListener("message", async (message) => {
-                const response = JSON.parse(message.data.toString());
-
-                this.log("RESPONSE", response);
-
-                if (
-                    typeof response !== "object" ||
-                    !response ||
-                    !("commandId" in response) ||
-                    typeof response.commandId !== "string"
-                ) {
-                    throw new Error(`Invalid command received`);
-                }
-
-                const commandId = response.commandId;
-
-                const [serviceId, endpointId, commandType] = commandId.split("/");
-
-                const validator = validators[`${serviceId}_${endpointId}_${commandType}` as keyof typeof validators];
-
-                if (!validator) {
-                    console.error(`No validator found for ${commandId}`);
-                    return;
-                }
-
-                const isValid = validator(response);
-                if (!isValid) {
-                    console.error(`Command validation failed for ${commandId}`);
-                    console.error(validator.errors);
-                }
-
-                const signal = this.responseSignals.get(response.commandId);
-                if (signal) {
-                    signal.dispatch(response);
-                    this.onResponse.dispatch(response as GenericResponseCommand);
+            this.socket.addEventListener("message", (message) => {
+                try {
+                    this.handleMessage(message);
+                } catch (err) {
+                    console.error(`Error handling message: ${err}`);
+                    console.error(message.data.toString());
                 }
             });
 
@@ -160,8 +135,6 @@ export class TachyonClient {
                     }
                 }
 
-                this.responseSignals.forEach((signal) => signal.disposeAll());
-                this.responseSignals.clear();
                 this.socket = undefined;
 
                 reject(disconnectReason);
@@ -177,87 +150,132 @@ export class TachyonClient {
                 }
             });
 
-            if (isAutohost) {
-                this.on("autohost", "connected").add((response) => {
-                    if (response.status === "success") {
-                        resolve({} as never);
-                    } else {
-                        reject(response.reason);
-                    }
+            if (this.actorType === "user") {
+                this.onEvent("system/connected").addOnce((event) => {
+                    resolve((event as SystemConnectedEvent).data);
                 });
-            } else {
-                this.on("system", "connected").add((response) => {
-                    if (response.status === "success") {
-                        resolve(response.data);
-                    } else {
-                        reject(response.reason);
-                    }
+            } else if (this.actorType === "autohost") {
+                this.onEvent("autohost/connected").addOnce((event) => {
+                    resolve((event as AutohostConnectedEvent).data);
                 });
             }
         });
     }
 
-    public async request<S extends ServiceId, E extends EndpointId<S> & string>(
-        ...args: RequestData<S, E> extends never
-            ? [serviceId: S, endpointId: E]
-            : [serviceId: S, endpointId: E, data: RequestData<S, E>]
-    ): Promise<ResponseCommand<S, E>> {
-        const serviceId = args[0];
-        const endpointId = args[1];
-        const data = args[2];
+    public async request<C extends GetCommandIds<Actor, "server", "request">>(
+        ...args: GetCommandData<GetCommands<Actor, "server", "request", C>> extends never
+            ? [commandId: C]
+            : [commandId: C, data: GetCommandData<GetCommands<Actor, "server", "request", C>>]
+    ): Promise<GetCommands<"server", Actor, "response", C>> {
+        if (!this.socket) {
+            throw new Error("Not connected to server");
+        }
 
-        const commandId = `${serviceId}/${endpointId as string}/request`;
+        const [commandId, data] = args as [C, GetCommandData<GetCommands<Actor, "server", "request", C>> | undefined];
+
         const messageId = randomUUID();
-        const request: GenericRequestCommand = { commandId, messageId };
-        const validator = validators[`${serviceId}_${endpointId}_request` as keyof typeof validators];
+
+        const request = {
+            type: "request",
+            commandId,
+            messageId,
+        } as GetCommands<Actor, "server", "request", C>;
 
         if (data) {
-            request.data = data;
+            Object.assign(request, { data });
         }
 
-        const isValid = validator(request);
-        if (!isValid) {
-            console.error(`Command validation failed for ${commandId}`);
-            console.error(validator.errors);
-        }
+        this.validateCommand(request);
 
-        this.socket?.send(JSON.stringify(request));
-        this.onRequest.dispatch(request);
+        this.socket.send(JSON.stringify(request));
 
         this.log("REQUEST", request);
 
         return new Promise((resolve) => {
-            this.on(serviceId, endpointId).addOnce((response) => {
+            this.onResponse(commandId).addOnce((response) => {
                 if (response.messageId === messageId) {
-                    resolve(response);
+                    resolve(response as GetCommands<"server", Actor, "response", C>);
                 }
             });
         });
     }
 
-    public on<S extends ServiceId, E extends EndpointId<S>>(
-        serviceId: S,
-        endpointId: E
-    ): Signal<ResponseCommand<S, E> & { messageId: string }> {
-        const commandId = `${serviceId}/${endpointId.toString()}/response`;
-        let signal = this.responseSignals.get(commandId);
+    /** Add handler for incoming event */
+    public onEvent(commandId: GetCommandIds<"server", Actor, "event">): Signal<GetCommands<"server", Actor, "event", typeof commandId>> {
+        let signal = this.eventHandlers.get(commandId);
         if (!signal) {
             signal = new Signal();
-            this.responseSignals.set(commandId, signal);
+            this.eventHandlers.set(commandId, signal);
         }
-
         return signal;
     }
 
-    public waitFor<S extends ServiceId, E extends EndpointId<S>>(
-        serviceId: S,
-        endpointId: E
-    ): Promise<ResponseCommand<S, E>> {
-        return new Promise((resolve) => {
-            this.on(serviceId, endpointId).addOnce((data) => {
-                resolve(data);
-            });
-        });
+    /** Add handler for incoming response */
+    public onResponse(commandId: GetCommandIds<"server", Actor, "response">): Signal<GetCommands<"server", Actor, "response", typeof commandId>> {
+        let signal = this.responseHandlers.get(commandId);
+        if (!signal) {
+            signal = new Signal();
+            this.responseHandlers.set(commandId, signal);
+        }
+        return signal;
+    }
+
+    protected handleMessage(message: MessageEvent) {
+        const obj = JSON.parse(message.data.toString());
+
+        if (!this.isCommand(obj)) {
+            throw new Error(`Message does not match expected command structure`);
+        }
+
+        if (obj.type === "request") {
+            this.handleRequest(obj);
+        } else if (obj.type === "response") {
+            this.handleResponse(obj);
+        } else if (obj.type === "event") {
+            this.handleEvent(obj);
+        } else {
+            throw new Error(`Unknown command type: ${obj.type}`);
+        }
+    }
+
+    /** Execute handler for incoming request */
+    protected async handleRequest(command: TachyonRequest) {
+        const handler = this.config.requestHandlers[command.commandId as keyof typeof this.config.requestHandlers] as unknown as (
+            data: unknown
+        ) => Promise<TachyonResponse>;
+
+        if (!handler) {
+            throw new Error(`No response handler found for: ${command.commandId}`);
+        }
+
+        let response: TachyonResponse;
+        if ("data" in command) {
+            response = await handler(command.data);
+        } else {
+            response = await handler(command);
+        }
+
+        this.validateCommand(response);
+
+        this.log("RESPONSE", response);
+
+        this.socket?.send(JSON.stringify(response));
+    }
+
+    /** Execute handler for incoming response */
+    protected async handleResponse(command: GetCommands<"server", Actor, "response">) {
+        const signal = this.responseHandlers.get(command.commandId);
+        if (signal) {
+            signal.dispatch(command);
+        }
+    }
+
+    /** Execute handler for incoming event */
+    protected async handleEvent(command: GetCommands<"server", Actor, "event">) {
+        const signal = this.eventHandlers.get(command.commandId);
+        if (signal) {
+            signal.dispatch(command);
+        }
     }
 
     public isConnected(): boolean {
@@ -277,11 +295,9 @@ export class TachyonClient {
         return `${this.config.host}${port}`;
     }
 
-    public async auth(optionsArg?: SetOptional<AuthOptions, keyof typeof defaultLoginOptions>): Promise<OAuth2Token> {
-        const options: AuthOptions = { ...defaultLoginOptions, ...optionsArg };
-
+    public async auth(options: AuthOptions): Promise<OAuth2Token> {
         if (options.steamSessionTicket) {
-            return this.steamAuth(options.steamSessionTicket, options.abortSignal);
+            return this.steamAuth(options.steamSessionTicket);
         }
 
         const redirectHandler = new RedirectHandler(options.abortSignal);
@@ -335,7 +351,7 @@ export class TachyonClient {
         return token;
     }
 
-    public async steamAuth(steamSessionTicket: string, abortSignal?: AbortSignal): Promise<OAuth2Token> {
+    public async steamAuth(steamSessionTicket: string): Promise<OAuth2Token> {
         const response = await fetch(`http://${this.getServerBaseUrl()}/token`, {
             method: "POST",
             headers: {
@@ -350,6 +366,11 @@ export class TachyonClient {
                 subject_token: steamSessionTicket,
             }),
         });
+
+        if (!response.headers.get("content-type")?.includes("application/json")) {
+            const text = await response.text();
+            throw new Error(`SteamAuth Error: HTTP ${response.status}: ${text}`);
+        }
 
         const obj = await response.json();
 
@@ -367,7 +388,7 @@ export class TachyonClient {
             throw new Error(`HTTP ${response.status} ${obj.error}: ${obj.message}`);
         }
 
-        throw new Error("Error getting OAuth Token");
+        throw new Error(`Unknown error getting OAuth Token: ${obj}`);
     }
 
     public async autohostAuth(): Promise<OAuth2Token> {
@@ -396,6 +417,26 @@ export class TachyonClient {
         //}
     }
 
+    protected validateCommand(command: TachyonCommand) {
+        const commandId = command.commandId;
+        const validatorId = `${commandId}/${command.type}/${command.type}`.replace("/", "_") as keyof typeof validators;
+        const validator = validators[validatorId];
+
+        if (!validator) {
+            throw new Error(`No validator found with id: ${validatorId}`);
+        }
+
+        const isValid = validator(command);
+        if (!isValid) {
+            console.error(validator.errors);
+            throw new Error(`Command validation failed for: ${commandId}`);
+        }
+    }
+
+    protected isCommand(obj: unknown): obj is TachyonCommand {
+        return typeof obj === "object" && obj !== null && "commandId" in obj && "messageId" in obj && "type" in obj;
+    }
+
     protected log(...args: Parameters<typeof console.log>) {
         if (this.config.logging) {
             console.log(...args);
@@ -403,12 +444,10 @@ export class TachyonClient {
     }
 
     protected isError(obj: unknown): obj is { statusCode: number; error: string; message: string } {
-        return typeof obj === "object" && obj !== null && "error" in obj && "message" in obj;
+        return typeof obj === "object" && obj !== null && "status" in obj;
     }
 
-    protected isTokenResponse(
-        obj: unknown
-    ): obj is { access_token: string; expires_in: number; refresh_token?: string; scope?: string } {
+    protected isTokenResponse(obj: unknown): obj is { access_token: string; expires_in: number; refresh_token?: string; scope?: string } {
         return typeof obj === "object" && obj !== null && "access_token" in obj;
     }
 }

@@ -1,22 +1,49 @@
-/* eslint-disable no-restricted-imports */
-import WS from "jest-websocket-mock";
+import { SystemConnectedEvent } from "tachyon-protocol";
+import { WebSocketServer } from "ws";
 
+// eslint-disable-next-line no-restricted-imports
 import { TachyonClient } from "../dist/index.js";
 
-// const mockServer = jest.fn();
-const mockServer = new WS("ws://127.0.0.1:3005", { jsonProtocol: true });
+const server = new WebSocketServer({ port: 3877 });
 
-const client = new TachyonClient("127.0.0.1:3005");
-
-beforeAll(async () => {
-    await mockServer.connected;
+const client = new TachyonClient("user", {
+    host: "127.0.0.1",
+    port: 3877,
+    requestHandlers: {},
+    logging: true,
 });
 
-// afterAll(async () => {});
+server.on("connection", (socket) => {
+    const command: SystemConnectedEvent = {
+        commandId: "system/connected",
+        messageId: "123",
+        type: "event",
+        data: {
+            userId: "",
+            username: "",
+            displayName: "bob",
+            avatarUrl: null,
+            clanId: null,
+            partyId: null,
+            scopes: [],
+            status: "offline",
+            battleStatus: null,
+            friendIds: [],
+            outgoingFriendRequestIds: [],
+            incomingFriendRequestIds: [],
+            ignoreIds: [],
+        },
+    };
+    socket.send(JSON.stringify(command));
+});
 
-test("system", () => {
-    test("version", async () => {
-        await client.waitFor("system", "version");
-        //client.request();
-    });
+test("version", async () => {
+    const connectionResponse = await client.connect("123");
+
+    expect(connectionResponse.displayName).toEqual("bob");
+});
+
+afterAll(async () => {
+    client.disconnect();
+    server.close();
 });
