@@ -3,12 +3,12 @@ import { randomUUID } from "node:crypto";
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { Signal } from "jaz-ts-utils";
 import {
-    AutohostConnectedEvent,
     GetCommandData,
     GetCommandIds,
     GetCommands,
-    SystemConnectedEvent,
+    TachyonActor,
     TachyonCommand,
+    TachyonEvent,
     tachyonMeta,
     TachyonRequest,
     TachyonResponse,
@@ -30,9 +30,7 @@ export type AuthOptions = {
     abortSignal?: AbortSignal;
 };
 
-type TachyonClientActor = "user" | "autohost";
-
-export interface TachyonClientOptions<Actor extends TachyonClientActor> {
+export interface TachyonClientOptions<Actor extends TachyonActor> {
     host: string;
     /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
@@ -51,18 +49,18 @@ export interface TachyonClientOptions<Actor extends TachyonClientActor> {
 
 const defaultTachyonClientOptions = {
     clientId: "tachyon_client",
-} satisfies Partial<TachyonClientOptions<TachyonClientActor>>;
+} satisfies Partial<TachyonClientOptions<TachyonActor>>;
 
-export class TachyonClient<Actor extends TachyonClientActor> {
-    public readonly actorType: Actor;
+export class TachyonClient<OriginActor extends TachyonActor> {
+    public readonly actorType: OriginActor;
     public socket?: WebSocket;
-    public config: TachyonClientOptions<Actor>;
+    public config: TachyonClientOptions<OriginActor>;
 
     protected oauthClient: OAuth2Client;
-    protected responseHandlers: Map<string, Signal<GetCommands<"server", Actor, "response">>> = new Map();
-    protected eventHandlers: Map<string, Signal<GetCommands<"server", Actor, "event">>> = new Map();
+    protected responseHandlers: Map<string, Signal<GetCommands<"server", OriginActor, "response">>> = new Map();
+    protected eventHandlers: Map<string, Signal<GetCommands<"server", OriginActor, "event">>> = new Map();
 
-    constructor(actorType: Actor, config: SetOptional<TachyonClientOptions<Actor>, keyof typeof defaultTachyonClientOptions>) {
+    constructor(actorType: OriginActor, config: SetOptional<TachyonClientOptions<OriginActor>, keyof typeof defaultTachyonClientOptions>) {
         this.actorType = actorType;
         this.config = { ...defaultTachyonClientOptions, ...config };
 
@@ -75,10 +73,12 @@ export class TachyonClient<Actor extends TachyonClientActor> {
         });
     }
 
-    public async connect(token: string): Promise<Actor extends "user" ? SystemConnectedEvent["data"] : AutohostConnectedEvent["data"]>;
-    public async connect(token: string): Promise<SystemConnectedEvent["data"] | AutohostConnectedEvent["data"]> {
+    public async connect(token: string): Promise<void> {
         return new Promise((resolve, reject) => {
             if (this.socket && this.socket.readyState === this.socket.OPEN) {
+                if (this.config.logging) {
+                    console.log(`Already connected`);
+                }
                 reject("already_connected");
                 return;
             }
@@ -96,10 +96,12 @@ export class TachyonClient<Actor extends TachyonClientActor> {
             });
 
             this.socket.on("unexpected-response", async (req, res) => {
-                console.log(res);
                 res.on("data", (chunk: Buffer) => {
                     const error = `HTTP Error ${res.statusCode}: ${chunk.toString()}`;
-                    reject(error);
+                    if (this.config.logging) {
+                        console.log(error);
+                    }
+                    throw new Error(error);
                 });
             });
 
@@ -118,6 +120,7 @@ export class TachyonClient<Actor extends TachyonClientActor> {
 
             this.socket.addEventListener("open", async (event) => {
                 this.log(`Connected to http://${this.getServerBaseUrl()} using Tachyon Version ${tachyonMeta.version}`);
+                resolve();
             });
 
             let disconnectReason: string;
@@ -137,7 +140,11 @@ export class TachyonClient<Actor extends TachyonClientActor> {
 
                 this.socket = undefined;
 
-                reject(disconnectReason);
+                if (this.config.logging) {
+                    console.log(`Disconnected: ${disconnectReason}`);
+                }
+
+                throw new Error(disconnectReason);
             });
 
             this.socket.addEventListener("error", (err) => {
@@ -149,29 +156,19 @@ export class TachyonClient<Actor extends TachyonClientActor> {
                     disconnectReason = err.message;
                 }
             });
-
-            if (this.actorType === "user") {
-                this.onEvent("system/connected").addOnce((event) => {
-                    resolve((event as SystemConnectedEvent).data);
-                });
-            } else if (this.actorType === "autohost") {
-                this.onEvent("autohost/connected").addOnce((event) => {
-                    resolve((event as AutohostConnectedEvent).data);
-                });
-            }
         });
     }
 
-    public async request<C extends GetCommandIds<Actor, "server", "request">>(
-        ...args: GetCommandData<GetCommands<Actor, "server", "request", C>> extends never
+    public async request<C extends GetCommandIds<OriginActor, "server", "request">>(
+        ...args: GetCommandData<GetCommands<OriginActor, "server", "request", C>> extends never
             ? [commandId: C]
-            : [commandId: C, data: GetCommandData<GetCommands<Actor, "server", "request", C>>]
-    ): Promise<GetCommands<"server", Actor, "response", C>> {
+            : [commandId: C, data: GetCommandData<GetCommands<OriginActor, "server", "request", C>>]
+    ): Promise<GetCommands<"server", OriginActor, "response", C>> {
         if (!this.socket) {
             throw new Error("Not connected to server");
         }
 
-        const [commandId, data] = args as [C, GetCommandData<GetCommands<Actor, "server", "request", C>> | undefined];
+        const [commandId, data] = args as [C, GetCommandData<GetCommands<OriginActor, "server", "request", C>> | undefined];
 
         const messageId = randomUUID();
 
@@ -179,7 +176,7 @@ export class TachyonClient<Actor extends TachyonClientActor> {
             type: "request",
             commandId,
             messageId,
-        } as GetCommands<Actor, "server", "request", C>;
+        } as GetCommands<OriginActor, "server", "request", C>;
 
         if (data) {
             Object.assign(request, { data });
@@ -188,20 +185,29 @@ export class TachyonClient<Actor extends TachyonClientActor> {
         this.validateCommand(request);
 
         this.socket.send(JSON.stringify(request));
-
-        this.log("REQUEST", request);
+        this.log("OUTGOING REQUEST", request);
 
         return new Promise((resolve) => {
-            this.onResponse(commandId).addOnce((response) => {
+            this.onResponse(commandId).addOnce((response: TachyonResponse) => {
                 if (response.messageId === messageId) {
-                    resolve(response as GetCommands<"server", Actor, "response", C>);
+                    resolve(response as GetCommands<"server", OriginActor, "response", C>);
                 }
             });
         });
     }
 
-    /** Add handler for incoming event */
-    public onEvent(commandId: GetCommandIds<"server", Actor, "event">): Signal<GetCommands<"server", Actor, "event", typeof commandId>> {
+    public sendEvent(event: TachyonEvent) {
+        if (!this.socket) {
+            throw new Error("Not connected to server");
+        }
+
+        this.validateCommand(event);
+
+        this.socket.send(JSON.stringify(event));
+        this.log("OUTGOING EVENT", event);
+    }
+
+    public onEvent(commandId: GetCommandIds<"server", OriginActor, "event">): Signal<GetCommands<"server", OriginActor, "event", typeof commandId>> {
         let signal = this.eventHandlers.get(commandId);
         if (!signal) {
             signal = new Signal();
@@ -210,8 +216,22 @@ export class TachyonClient<Actor extends TachyonClientActor> {
         return signal;
     }
 
-    /** Add handler for incoming response */
-    public onResponse(commandId: GetCommandIds<"server", Actor, "response">): Signal<GetCommands<"server", Actor, "response", typeof commandId>> {
+    public nextEvent(
+        commandId: GetCommandIds<"server", OriginActor, "event">
+    ): Promise<GetCommandData<GetCommands<"server", OriginActor, "event", typeof commandId>>> {
+        return new Promise((resolve) => {
+            let signal = this.eventHandlers.get(commandId);
+            if (!signal) {
+                signal = new Signal();
+                this.eventHandlers.set(commandId, signal);
+            }
+            signal.addOnce((event) => {
+                resolve((event as { data: GetCommandData<GetCommands<"server", OriginActor, "event", typeof commandId>> }).data);
+            });
+        });
+    }
+
+    public onResponse(commandId: GetCommandIds<"server", OriginActor, "response">): Signal<GetCommands<"server", OriginActor, "response", typeof commandId>> {
         let signal = this.responseHandlers.get(commandId);
         if (!signal) {
             signal = new Signal();
@@ -238,8 +258,9 @@ export class TachyonClient<Actor extends TachyonClientActor> {
         }
     }
 
-    /** Execute handler for incoming request */
     protected async handleRequest(command: TachyonRequest) {
+        this.log("INCOMING REQUEST", command);
+
         const handler = this.config.requestHandlers[command.commandId as keyof typeof this.config.requestHandlers] as unknown as (
             data: unknown
         ) => Promise<TachyonResponse>;
@@ -257,24 +278,25 @@ export class TachyonClient<Actor extends TachyonClientActor> {
 
         this.validateCommand(response);
 
-        this.log("RESPONSE", response);
-
         this.socket?.send(JSON.stringify(response));
+        this.log("OUTGOING RESPONSE", response);
     }
 
-    /** Execute handler for incoming response */
-    protected async handleResponse(command: GetCommands<"server", Actor, "response">) {
-        const signal = this.responseHandlers.get(command.commandId);
+    protected async handleResponse(response: TachyonResponse) {
+        this.log("INCOMING RESPONSE", response);
+
+        const signal = this.responseHandlers.get(response.commandId);
         if (signal) {
-            signal.dispatch(command);
+            signal.dispatch(response as GetCommands<"server", OriginActor, "response">);
         }
     }
 
-    /** Execute handler for incoming event */
-    protected async handleEvent(command: GetCommands<"server", Actor, "event">) {
-        const signal = this.eventHandlers.get(command.commandId);
+    protected async handleEvent(event: GetCommands<"server", OriginActor, "event">) {
+        this.log("INCOMING EVENT", event);
+
+        const signal = this.eventHandlers.get(event.commandId);
         if (signal) {
-            signal.dispatch(command);
+            signal.dispatch(event);
         }
     }
 
@@ -351,7 +373,7 @@ export class TachyonClient<Actor extends TachyonClientActor> {
         return token;
     }
 
-    public async steamAuth(steamSessionTicket: string): Promise<OAuth2Token> {
+    protected async steamAuth(steamSessionTicket: string): Promise<OAuth2Token> {
         const response = await fetch(`http://${this.getServerBaseUrl()}/token`, {
             method: "POST",
             headers: {
@@ -419,7 +441,7 @@ export class TachyonClient<Actor extends TachyonClientActor> {
 
     protected validateCommand(command: TachyonCommand) {
         const commandId = command.commandId;
-        const validatorId = `${commandId}/${command.type}/${command.type}`.replace("/", "_") as keyof typeof validators;
+        const validatorId = `${commandId}/${command.type}`.replaceAll("/", "_") as keyof typeof validators;
         const validator = validators[validatorId];
 
         if (!validator) {

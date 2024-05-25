@@ -10,7 +10,6 @@ const client = new TachyonClient("user", {
     host: "127.0.0.1",
     port: 3877,
     requestHandlers: {},
-    logging: true,
 });
 
 server.on("connection", (socket) => {
