@@ -216,9 +216,9 @@ export class TachyonClient<OriginActor extends TachyonActor> {
         return signal;
     }
 
-    public nextEvent(
-        commandId: GetCommandIds<"server", OriginActor, "event">
-    ): Promise<GetCommandData<GetCommands<"server", OriginActor, "event", typeof commandId>>> {
+    public nextEvent<C extends GetCommandIds<"server", OriginActor, "event">>(
+        commandId: C
+    ): Promise<GetCommandData<GetCommands<"server", OriginActor, "event", C>>> {
         return new Promise((resolve) => {
             let signal = this.eventHandlers.get(commandId);
             if (!signal) {
@@ -226,7 +226,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
                 this.eventHandlers.set(commandId, signal);
             }
             signal.addOnce((event) => {
-                resolve((event as { data: GetCommandData<GetCommands<"server", OriginActor, "event", typeof commandId>> }).data);
+                resolve((event as { data: GetCommandData<GetCommands<"server", OriginActor, "event", C>> }).data);
             });
         });
     }
@@ -291,12 +291,12 @@ export class TachyonClient<OriginActor extends TachyonActor> {
         }
     }
 
-    protected async handleEvent(event: GetCommands<"server", OriginActor, "event">) {
+    protected async handleEvent(event: TachyonEvent) {
         this.log("INCOMING EVENT", event);
 
         const signal = this.eventHandlers.get(event.commandId);
         if (signal) {
-            signal.dispatch(event);
+            signal.dispatch(event as GetCommands<"server", OriginActor, "event">);
         }
     }
 
