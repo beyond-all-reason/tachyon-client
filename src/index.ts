@@ -38,7 +38,7 @@ export interface TachyonClientOptions<Actor extends TachyonActor> {
     requestHandlers: {
         [CommandId in GetCommandIds<"server", Actor, "request">]: (
             data: GetCommandData<GetCommands<"server", Actor, "request", CommandId>>
-        ) => Promise<GetCommandData<GetCommands<Actor, "server", "response", CommandId>>>;
+        ) => Promise<GetCommands<Actor, "server", "response", CommandId>>;
     };
     port?: number;
     clientSecret?: string;
@@ -65,7 +65,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
         this.config = { ...defaultTachyonClientOptions, ...config };
 
         this.oauthClient = new OAuth2Client({
-            server: `http://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address,
+            server: `http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address,
             clientId: config.clientId ?? "tachyon_client",
             clientSecret: config.clientSecret,
             authorizationEndpoint: "/authorize",
@@ -119,7 +119,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
             });
 
             this.socket.addEventListener("open", async (event) => {
-                this.log(`Connected to http://${this.getServerBaseUrl()} using Tachyon Version ${tachyonMeta.version}`);
+                this.log(`Connected to http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()} using Tachyon Version ${tachyonMeta.version}`);
                 resolve();
             });
 
@@ -151,7 +151,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
                 if (err.message.includes("invalid subprotocol")) {
                     disconnectReason = `Tachyon server protocol version (${serverProtocol}) is incompatible with this client (tachyon-${tachyonMeta.version})`;
                 } else if (err.message.includes("ECONNREFUSED")) {
-                    disconnectReason = `Could not connect to server at http://${this.getServerBaseUrl()}`;
+                    disconnectReason = `Could not connect to server at http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}`;
                 } else {
                     disconnectReason = err.message;
                 }
@@ -374,7 +374,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
     }
 
     protected async steamAuth(steamSessionTicket: string): Promise<OAuth2Token> {
-        const response = await fetch(`http://${this.getServerBaseUrl()}/token`, {
+        const response = await fetch(`http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}/token`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -424,7 +424,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
     // TODO
     public async register(options: { steamSessionTicket: string; username: string }) {
         //if (options.steamSessionTicket) {
-        const registerResponse = await fetch(`http://${this.getServerBaseUrl()}/register`, {
+        const registerResponse = await fetch(`http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
