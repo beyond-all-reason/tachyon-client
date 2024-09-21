@@ -2,17 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { generateCodeVerifier, OAuth2Client, OAuth2Token } from "@badgateway/oauth2-client";
 import { Signal } from "jaz-ts-utils";
-import {
-    GetCommandData,
-    GetCommandIds,
-    GetCommands,
-    TachyonActor,
-    TachyonCommand,
-    TachyonEvent,
-    tachyonMeta,
-    TachyonRequest,
-    TachyonResponse,
-} from "tachyon-protocol";
+import { GetCommandData, GetCommandIds, GetCommands, TachyonActor, TachyonEvent, tachyonMeta, TachyonRequest, TachyonResponse } from "tachyon-protocol";
+import { TachyonCommand } from "tachyon-protocol/types";
 import * as validators from "tachyon-protocol/validators";
 import { SetOptional } from "type-fest";
 import { ClientOptions, MessageEvent, WebSocket } from "ws";
@@ -38,7 +29,7 @@ export interface TachyonClientOptions<Actor extends TachyonActor> {
     requestHandlers: {
         [CommandId in GetCommandIds<"server", Actor, "request">]: (
             data: GetCommandData<GetCommands<"server", Actor, "request", CommandId>>
-        ) => Promise<GetCommands<Actor, "server", "response", CommandId>>;
+        ) => Promise<Omit<GetCommands<Actor, "server", "response", CommandId>, "type" | "commandId" | "messageId">>;
     };
     port?: number;
     clientSecret?: string;
@@ -262,19 +253,21 @@ export class TachyonClient<OriginActor extends TachyonActor> {
         this.log("INCOMING REQUEST", command);
 
         const handler = this.config.requestHandlers[command.commandId as keyof typeof this.config.requestHandlers] as unknown as (
-            data: unknown
-        ) => Promise<TachyonResponse>;
+            data?: unknown
+        ) => Promise<Omit<TachyonResponse, "type" | "commandId" | "messageId">>;
 
         if (!handler) {
             throw new Error(`No response handler found for: ${command.commandId}`);
         }
 
-        let response: TachyonResponse;
-        if ("data" in command) {
-            response = await handler(command.data);
-        } else {
-            response = await handler(command);
-        }
+        const handlerResponse = await handler("data" in command ? command.data : undefined);
+
+        const response = {
+            type: "response",
+            commandId: command.commandId,
+            messageId: command.messageId,
+            ...handlerResponse,
+        } as TachyonResponse;
 
         this.validateCommand(response);
 
@@ -441,7 +434,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
 
     protected validateCommand(command: TachyonCommand) {
         const commandId = command.commandId;
-        const validatorId = `${commandId}/${command.type}`.replaceAll("/", "_") as keyof typeof validators;
+        const validatorId = `${commandId}/${command.type}`.replaceAll("/", "_") as Exclude<keyof typeof validators, "validator">;
         const validator = validators[validatorId];
 
         if (!validator) {
