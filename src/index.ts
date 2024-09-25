@@ -56,11 +56,10 @@ export class TachyonClient<OriginActor extends TachyonActor> {
         this.config = { ...defaultTachyonClientOptions, ...config };
 
         this.oauthClient = new OAuth2Client({
-            server: `http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}`, // TODO: https, discovery, allow specifying custom address,
-            clientId: config.clientId ?? "generic_lobby",
-            clientSecret: config.clientSecret,
-            authorizationEndpoint: "/oauth/authorize",
-            tokenEndpoint: "/oauth/token",
+            server: `http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}`,
+            clientId: "generic_lobby",
+            discoveryEndpoint: "/.well-known/oauth-authorization-server",
+            authenticationMethod: "client_secret_basic",
         });
     }
 
@@ -74,7 +73,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
                 return;
             }
 
-            const wsPrefix = this.config.ssl ? "wss" : "wss";
+            const wsPrefix = this.config.ssl ? "wss" : "ws";
             const address = `${wsPrefix}://${this.getServerBaseUrl()}/tachyon`;
 
             let serverProtocol: string | undefined;
