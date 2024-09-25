@@ -23,7 +23,7 @@ export type AuthOptions = {
 
 export interface TachyonClientOptions<Actor extends TachyonActor> {
     host: string;
-    /** Defaults to `tachyon_client`. If the OAuth server supports clients with other ids, you may specify them here */
+    /** Defaults to `generic_lobby`. If the OAuth server supports clients with other ids, you may specify them here */
     clientId: string;
     /** Required request handlers. These need to be implemented as the other actor expects a response */
     requestHandlers: {
@@ -32,7 +32,6 @@ export interface TachyonClientOptions<Actor extends TachyonActor> {
         ) => Promise<Omit<GetCommands<Actor, "server", "response", CommandId>, "type" | "commandId" | "messageId">>;
     };
     port?: number;
-    clientSecret?: string;
     ssl?: boolean;
     logging?: boolean;
     webSocketOptions?: ClientOptions;
@@ -57,7 +56,7 @@ export class TachyonClient<OriginActor extends TachyonActor> {
 
         this.oauthClient = new OAuth2Client({
             server: `http${this.config.ssl ? "s" : ""}://${this.getServerBaseUrl()}`,
-            clientId: "generic_lobby",
+            clientId: config.clientId ?? "generic_lobby",
             discoveryEndpoint: "/.well-known/oauth-authorization-server",
             authenticationMethod: "client_secret_basic",
         });
