@@ -1,6 +1,6 @@
-import { Config } from "jest";
+// It was config.ts, but jest is broken https://github.com/jestjs/jest/issues/14740
 
-const config: Config = {
+const config = {
     preset: "ts-jest",
     testEnvironment: "node",
     rootDir: "test",
